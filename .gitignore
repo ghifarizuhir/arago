@@ -1,0 +1,10 @@
+node_modules/
+.turbo/
+.next/
+dist/
+.env
+.env*.local
+*.tsbuildinfo
+.vercel/
+drizzle/meta/
+coverage/
