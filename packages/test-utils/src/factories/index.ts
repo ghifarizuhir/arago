@@ -1,6 +1,5 @@
 import { users, schools, districts, classes, type Database } from "@arago/db";
 import type { UserRole } from "@arago/validators";
-import { eq } from "drizzle-orm";
 
 export async function seedTestDistrict(db: Database) {
   const [district] = await db
