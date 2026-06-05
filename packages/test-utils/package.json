@@ -9,9 +9,12 @@
     "clean": "rm -rf .turbo node_modules"
   },
   "dependencies": {
-    "@arago/db": "workspace:*"
+    "@arago/db": "workspace:*",
+    "@arago/validators": "workspace:*",
+    "drizzle-orm": "^0.38.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "typescript": "^5.7.0"
   }
 }

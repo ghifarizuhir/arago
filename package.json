@@ -15,6 +15,9 @@
     "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   }

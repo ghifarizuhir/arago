@@ -27,10 +27,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, user }: any) {
       if (session.user) {
-        session.user.role = user.role;
-        session.user.schoolId = user.schoolId;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).role = user.role;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).schoolId = user.schoolId;
       }
       return session;
     },

@@ -1,4 +1,5 @@
 import { generateObject } from "ai";
+import { z } from "zod";
 import { getModel } from "./providers";
 import { AssessmentOutputSchema } from "./schemas";
 import {
@@ -7,7 +8,6 @@ import {
   SHORT_ANSWER_TEMPLATE,
   MIXED_TEMPLATE,
 } from "./prompts";
-import type { GenerateAssessmentInput } from "@arago/validators";
 
 const MAX_RETRIES = 2;
 
@@ -81,4 +81,5 @@ export async function generateAssessment(
   );
 }
 
-export { AssessmentItemSchema, AssessmentOutputSchema };
+export { AssessmentOutputSchema } from "./schemas";
+export { AssessmentItemSchema } from "./schemas";
