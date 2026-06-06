@@ -12,6 +12,8 @@
     "db:generate": "turbo db:generate",
     "db:migrate": "turbo db:migrate",
     "db:push": "turbo db:push",
+    "db:seed": "turbo db:seed",
+    "db:reset": "turbo db:reset",
     "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {

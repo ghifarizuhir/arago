@@ -32,6 +32,12 @@
     "db:push": {
       "cache": false
     },
+    "db:seed": {
+      "cache": false
+    },
+    "db:reset": {
+      "cache": false
+    },
     "clean": {
       "cache": false
     }
