@@ -1,12 +1,10 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { db } from "@arago/db/client";
 import { authenticateUser } from "@/lib/auth/password";
+import type { UserRole } from "@arago/validators";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db),
-  session: { strategy: "database" },
+  session: { strategy: "jwt" },
   providers: [
     Credentials({
       name: "credentials",
@@ -27,13 +25,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async session({ session, user }: any) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
+        token.schoolId = user.schoolId;
+      }
+      return token;
+    },
+    async session({ session, token }) {
       if (session.user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).role = user.role;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).schoolId = user.schoolId;
+        session.user.role = token.role as UserRole;
+        session.user.schoolId = token.schoolId as string | null;
       }
       return session;
     },

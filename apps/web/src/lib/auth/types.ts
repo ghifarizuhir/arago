@@ -14,10 +14,3 @@ declare module "next-auth" {
     schoolId: string | null;
   }
 }
-
-declare module "@auth/drizzle-adapter" {
-  interface AdapterUser {
-    role: UserRole;
-    schoolId: string | null;
-  }
-}
