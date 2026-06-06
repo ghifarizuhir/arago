@@ -8,11 +8,33 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
+# ──────────────────────────────────────────────────────────────────────────────
+# PRODUCTION ROLLBACK RUNBOOK
+#
+# Database (Supabase, PITR enabled — 7-day retention on Pro plan):
+#   1. Open Supabase Dashboard → Project → Database → Backups.
+#   2. Select "Point-in-Time Recovery" and enter a timestamp just before this
+#      deploy's "Apply DB migrations" step began (use the Actions run start time).
+#   3. Click "Start Recovery" — typically completes in 10–15 minutes.
+#   4. After the database is restored, redeploy the last known-good Git revision
+#      from the GitHub Actions tab (re-run the workflow on that commit).
+#
+# Application only (no migration issue):
+#   Run: vercel rollback <previous-deployment-url>
+#   Or visit Vercel Dashboard → Deployments → click the prior deployment → Promote.
+#
+# Full procedure and escalation path: docs/deploy-runbook.md
+# ──────────────────────────────────────────────────────────────────────────────
+
 jobs:
-  deploy:
+  deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
     environment: production
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -23,15 +45,23 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - name: Run Database Migrations
+
+      - name: Build
+        run: npx vercel build
+
+      - name: Apply DB migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm db:migrate
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: --prod
+
+      - name: Deploy preview (pre-promote)
+        id: deploy
+        run: |
+          url=$(npx vercel deploy --prebuilt | tail -n1)
+          echo "url=$url" >> $GITHUB_OUTPUT
+
+      - name: Smoke test
+        run: curl --fail --retry 3 --retry-delay 5 "${{ steps.deploy.outputs.url }}"
+
+      - name: Promote to production
+        run: npx vercel promote "${{ steps.deploy.outputs.url }}"
