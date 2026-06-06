@@ -1,7 +1,7 @@
-import { generateObject } from "ai";
+import { generateObject, streamObject } from "ai";
 import { z } from "zod";
 import { getModel } from "./providers";
-import { AssessmentOutputSchema } from "./schemas";
+import { AssessmentOutputSchema, AssessmentItemSchema } from "./schemas";
 import {
   ASSESSMENT_GENERATION_PROMPT,
   MULTIPLE_CHOICE_TEMPLATE,
@@ -79,6 +79,21 @@ export async function generateAssessment(
   throw new Error(
     `Assessment generation failed after ${MAX_RETRIES + 1} attempts: ${lastError instanceof Error ? lastError.message : "Unknown error"}`
   );
+}
+
+export function streamAssessmentItems(params: GenerateAssessmentParams) {
+  const model = getModel();
+  const prompt = buildPrompt(params);
+
+  const { elementStream } = streamObject({
+    model,
+    output: "array",
+    schema: AssessmentItemSchema,
+    system: ASSESSMENT_GENERATION_PROMPT,
+    prompt,
+  });
+
+  return elementStream;
 }
 
 export { AssessmentOutputSchema } from "./schemas";
