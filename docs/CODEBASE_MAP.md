@@ -1,6 +1,6 @@
 # Arago — Codebase Map & Current Positioning
 
-> **Generated:** 2026-06-06
+> **Generated:** 2026-06-06 · **Last updated:** 2026-06-07
 > **Purpose:** A single-source orientation document describing what exists today,
 > how the pieces fit together, and where the project currently stands.
 
@@ -133,11 +133,13 @@ Provider-agnostic via the Vercel AI SDK.
 
 | Export path                          | Contents                          |
 | ------------------------------------ | --------------------------------- |
-| `@arago/ai`                          | `generateAssessment`, schemas, provider controls |
-| `@arago/ai/assessment-generator`     | `generateAssessment` + schemas    |
+| `@arago/ai`                          | `generateAssessment`, `streamAssessmentItems`, `AssessmentItemSchema`, `AssessmentOutputSchema`, provider controls |
+| `@arago/ai/assessment-generator`     | `generateAssessment`, `streamAssessmentItems` + schemas    |
 
 - `providers/index.ts` — module-level active provider (`openai` default → `gpt-4o-mini`, or `anthropic` → `claude-sonnet-4-20250514`), selectable via `AI_PROVIDER` env or `setProvider()`. `getModel()` returns a `LanguageModelV1`.
-- `assessment-generator.ts` — `generateAssessment()` entry point. Uses `generateObject` with `AssessmentOutputSchema` (Zod) to force structured output; retries up to `MAX_RETRIES` (2); selects a prompt template (multiple-choice / short-answer / mixed) from the requested `itemTypes`.
+- `assessment-generator.ts` — two entry points:
+  - `generateAssessment()` — non-streaming. Uses `generateObject` with `AssessmentOutputSchema` (Zod) to force structured output; retries up to `MAX_RETRIES` (2); selects a prompt template (multiple-choice / short-answer / mixed) from the requested `itemTypes`.
+  - `streamAssessmentItems()` — streaming. Uses `streamObject` with `output: "array"` + `AssessmentItemSchema` and returns the `elementStream` so items can be emitted one at a time (consumed by the SSE generation endpoint). No retry wrapper.
 - `prompts/index.ts` — system prompt + 3 templates.
 - Tests inject `MockLanguageModelV1` rather than calling real providers (`__tests__/`, ~47 tests).
 
@@ -155,10 +157,19 @@ fixtures.
 The only deployable (`output: "standalone"`).
 
 **Routing & pages:**
-- `app/layout.tsx` — root layout with `SessionProvider`.
+- `app/layout.tsx` — root layout with `SessionProvider` (metadata title "Arago — AI-Powered Assessment Platform").
 - `app/page.tsx` — homepage ("Arago").
-- `app/api/auth/[...nextauth]/route.ts` — NextAuth handlers.
-- `app/api/auth/register/route.ts` — registration (validate → uniqueness check → hash → insert).
+- `app/demo/page.tsx` — demo of the assessment-authoring "Topic step" (renders `TopicStep` + `SearchWithDropdown`); standalone, not yet wired into a real flow.
+
+**API route handlers (`app/api/`):**
+- `auth/[...nextauth]/route.ts` — NextAuth handlers.
+- `auth/register/route.ts` — registration (validate → uniqueness check → hash → insert).
+- `standards/route.ts` — `GET` standards search. `requireAuth`; case-insensitive `ILIKE` match on `code`/`description`/`subject` from `?q=`, capped at 50 rows, ordered by `code`. Returns `{ standards: [...] }`.
+- `assessments/generate/route.ts` — `POST` SSE assessment generation. `requireTeacher`; validates `GenerateAssessmentSchema`, calls `streamAssessmentItems`, and pipes each item as a `data: {item}` event (`text/event-stream`), closing with `data: [DONE]`. Generation errors are emitted as an inline `data: {error}` event.
+
+**Components (`src/components/`):**
+- `SearchWithDropdown.tsx` — client multi-select for standards: 300 ms debounced fetch to `/api/standards`, chip display with removal, click-outside handling, loading state.
+- `TopicStep.tsx` — client form collecting a topic (3–500 chars) + optional standards via `SearchWithDropdown`; character counter, validation, `onNext({ topic, standardIds })`.
 
 **Auth (`src/lib/auth/`):**
 - `password.ts` — `hashPassword` (bcrypt cost 12), `authenticateUser` (bcrypt compare). `passwordHash` is nullable for OAuth-style users.
@@ -166,7 +177,7 @@ The only deployable (`output: "standalone"`).
 - `guards.ts` — `requireAuth`, `requireRole(...)`, `requireTeacher` (teacher+admin), `requireAdmin`. Return `{ session, error }` where `error` is a ready-to-return `NextResponse` (401/403).
 - `types.ts` + `src/types/next-auth.d.ts` — session shape augmentation.
 
-**`middleware.ts`** — edge gate. `publicPaths` bypass auth; everything else requires login; `roleRoutes` maps each role to allowed path prefixes, redirecting unauthorized access to `/dashboard`.
+**`middleware.ts`** — edge gate. `publicPaths` (`/login`, `/register`, `/api/auth*`) bypass auth; unauthenticated requests elsewhere redirect to `/login` (with `callbackUrl`); `roleRoutes` maps each role to allowed path prefixes and redirects role-unauthorized access to `/dashboard`. Logged-in users hitting `/login` or `/register` are bounced to `/dashboard`.
 
 > Adding a protected route means updating **both** `roleRoutes` in `middleware.ts`
 > **and** the guard on the handler.
@@ -213,24 +224,28 @@ pnpm --filter @arago/ai test
 
 ## 6. Current Positioning — Where the Project Stands
 
-This is a **Phase 0 / foundation-stage** codebase. The skeleton and contracts are
-in place; the product surface (UI, business flows) is not yet built.
+This is a **Phase 0 → Phase 1 transition** codebase. The foundation and contracts
+are solid; the first slices of the product surface (standards search, a streaming
+generation endpoint, and the initial authoring UI components) have started landing.
 
 ### ✅ Done (foundation is solid)
 
 - Monorepo wiring: Turbo + pnpm workspaces, strict TS, shared ESLint/Prettier.
 - **Complete data model** — all 11 tables, enums, relations, an initial migration, and a working seed script.
 - **Auth backend** — registration, credentials login, JWT sessions carrying role/schoolId, route guards, and edge middleware with role-based routing.
-- **AI generation engine** — provider-agnostic, structured-output, retry-safe, with mock-based tests (no live API calls in CI).
+- **AI generation engine** — provider-agnostic, structured-output, retry-safe, with mock-based tests (no live API calls in CI). Now also exposes a **streaming** path (`streamAssessmentItems`).
+- **Standards search** — `GET /api/standards` (auth-gated ILIKE search) plus the `SearchWithDropdown` client component that consumes it.
+- **Streaming generation endpoint** — `POST /api/assessments/generate` streams AI-generated items over SSE (teacher/admin only).
 - **Validation layer** — shared Zod schemas used across auth, DB, and AI.
-- **Test infrastructure** — Vitest across all packages, DB seed factories, ~100+ tests total across the suites.
+- **Test infrastructure** — Vitest across all packages, DB seed factories, ~100+ tests total across the suites (now including the standards route).
+- **Deploy/CI** — `.github/workflows/deploy.yml` (smoke-before-promote) and `docs/deploy-runbook.md` (PITR rollback).
 
 ### 🚧 Not yet built (the gaps)
 
-- **UI/product surface** — only a placeholder homepage and a root layout exist. No dashboard, no login/register pages, no assessment authoring/taking screens, despite `middleware.ts` redirecting to `/dashboard`.
-- **Assessment lifecycle APIs** — no route handlers yet to create/publish/grade assessments or to persist AI-generated items into the DB. `@arago/ai` generates content but nothing wires it to `assessmentItems`.
+- **UI/product surface** — homepage, root layout, and a standalone `/demo` of the authoring "Topic step" exist. Still no dashboard, login/register pages, or assessment taking/grading screens, despite `middleware.ts` redirecting to `/dashboard` and `/login`.
+- **Assessment persistence** — generation streams items to the client, but **nothing yet persists** AI output into `assessmentItems`, and there are no create/publish route handlers. The generate endpoint is fire-and-forget; the loop from streamed items → saved `assessment` + `assessmentItems` rows is the next missing link.
 - **Submission & grading flow** — schema exists (`assessmentSubmissions`, `submissionResponses`, `aiFeedback`) but no code drives it.
-- **Audit logging in practice** — table exists; the seed writes one row, but app actions don't yet emit audit entries.
+- **Audit logging in practice** — table exists; the seed writes one row, but app actions (register, generate, search) don't yet emit audit entries.
 
 ### ⚠️ Known gotchas / risks (carried from CLAUDE.md + observations)
 
@@ -242,9 +257,10 @@ in place; the product surface (UI, business flows) is not yet built.
 ### Suggested next steps (logical sequence)
 
 1. Build login/register/dashboard pages so the middleware redirect targets exist.
-2. Add assessment CRUD route handlers (guarded by `requireTeacher`) that persist AI output into `assessmentItems`.
-3. Wire the submission + grading flow, emitting `auditLog` entries on sensitive actions.
-4. Resolve the stale `apps/web/drizzle.config.ts` (delete or fix the schema path).
+2. Persist generation output: add a CRUD/create route (guarded by `requireTeacher`) that writes the streamed/generated items into `assessments` + `assessmentItems`, closing the gap left by the SSE generate endpoint.
+3. Promote the `/demo` Topic step into a real multi-step authoring flow wired to the generate endpoint.
+4. Wire the submission + grading flow, emitting `auditLog` entries on sensitive actions.
+5. Resolve the stale `apps/web/drizzle.config.ts` (delete or fix the schema path).
 
 ---
 
