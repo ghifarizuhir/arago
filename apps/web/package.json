@@ -1,0 +1,46 @@
+{
+  "name": "@arago/web",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@arago/ai": "workspace:*",
+    "@arago/db": "workspace:*",
+    "@arago/validators": "workspace:*",
+    "@supabase/supabase-js": "^2.0.0",
+    "@tiptap/extension-placeholder": "^2.0.0",
+    "@tiptap/react": "^2.0.0",
+    "@tiptap/starter-kit": "^2.0.0",
+    "ai": "^4.1.0",
+    "bcryptjs": "^2.4.3",
+    "mammoth": "^1.8.0",
+    "next": "^15.2.0",
+    "next-auth": "^5.0.0-beta.25",
+    "pdf-parse": "^1.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "uuid": "^11.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.0.0",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/uuid": "^10.0.0",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@tailwindcss/typography": "^0.5.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "@vitejs/plugin-react": "^4.3.0"
+  }
+}
