@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/guards';
+import { getCurrentWorkspaceId } from '@/lib/workspace-context';
 import { db } from '@arago/db/client';
 import { teachingModules } from '@arago/db/schema';
 import { eq, isNull, and } from 'drizzle-orm';
@@ -22,6 +23,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { error: authError } = await requireAuth();
   if (authError) return authError;
 
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!workspaceId) {
+    return NextResponse.json({ error: 'No workspace selected' }, { status: 400 });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) {
@@ -33,7 +39,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const [module_] = await db
     .select()
     .from(teachingModules)
-    .where(and(eq(teachingModules.id, moduleId), isNull(teachingModules.deletedAt)))
+    .where(
+      and(
+        eq(teachingModules.id, moduleId),
+        eq(teachingModules.workspaceId, workspaceId),
+        isNull(teachingModules.deletedAt),
+      ),
+    )
     .limit(1);
 
   if (!module_) {
@@ -59,7 +71,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   await db
     .update(teachingModules)
     .set({ extractedText: rawText })
-    .where(eq(teachingModules.id, moduleId));
+    .where(
+      and(
+        eq(teachingModules.id, moduleId),
+        eq(teachingModules.workspaceId, workspaceId),
+      ),
+    );
 
   return NextResponse.json({ summary: extracted.summary, topics: extracted.topics });
 }
