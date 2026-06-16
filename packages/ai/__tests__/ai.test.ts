@@ -96,6 +96,31 @@ describe('@arago/ai', () => {
     });
   });
 
+  describe('generateBlueprint curriculum injection', () => {
+    it('includes the k13 template markers in the model prompt', async () => {
+      let capturedPrompt = '';
+      const model = new MockLanguageModelV1({
+        defaultObjectGenerationMode: 'json',
+        doGenerate: async (opts) => {
+          capturedPrompt = JSON.stringify(opts.prompt);
+          return {
+            rawCall: { rawPrompt: null, rawSettings: {} },
+            finishReason: 'stop',
+            usage: { promptTokens: 1, completionTokens: 1 },
+            text: JSON.stringify({
+              title: 'Kisi-kisi',
+              indicators: [{ id: 'IND-001', description: 'd', bloomLevel: 'C1', competency: 'KD 3.1' }],
+            }),
+          };
+        },
+      });
+      vi.spyOn(providers, 'getModel').mockReturnValue(model as any);
+
+      await generateBlueprint('Judul', '<p>isi</p>', 'k13');
+      expect(capturedPrompt).toContain('Kompetensi Dasar');
+    });
+  });
+
   describe('generateAssessment', () => {
     it('returns assessment items with 4 options each', async () => {
       const mockResponse = {
