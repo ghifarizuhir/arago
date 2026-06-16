@@ -9,7 +9,6 @@ const NAV_ITEMS = [
   { href: '/modules', label: 'Modul Ajar' },
   { href: '/blueprints', label: 'Kisi-kisi' },
   { href: '/assessments', label: 'Asesmen' },
-  { href: '/settings', label: 'Pengaturan' },
 ] as const;
 
 interface SidebarProps {

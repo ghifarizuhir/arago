@@ -2,9 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@arago/db", "@arago/ai", "@arago/validators", "@arago/test-utils"],
-  // typedRoutes disabled during incremental Phase 1 build: routes are added slice-by-slice,
-  // so the link graph is intentionally incomplete and dynamic router.push(string) is used.
-  // Re-enable in the final Phase 1 slice once all routes exist.
+  // typedRoutes left off for Phase 1: the app navigates with runtime-dynamic targets
+  // (login callbackUrl, query-string result redirects) that aren't statically typeable
+  // without `as Route` casts everywhere. Routing is validated via the `next build` route
+  // table instead. Re-enable + add casts as a Phase 4 polish item.
   experimental: {
     typedRoutes: false
   },
@@ -16,6 +17,19 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**"
       }
     ]
+  },
+  // The workspace packages use NodeNext ESM `.js` import specifiers that resolve to
+  // `.ts` sources. tsc accepts these, but the webpack build needs to be told to try
+  // `.ts`/`.tsx` when it sees a `.js` import. Mirror the same for Turbopack (dev).
+  webpack: (config) => {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js"],
+      ".mjs": [".mts", ".mjs"]
+    };
+    return config;
+  },
+  turbopack: {
+    resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".mjs"]
   }
 };
 

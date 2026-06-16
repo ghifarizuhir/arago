@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { RegisterSchema } from '@arago/validators';
 import { db } from '@arago/db/client';
 import { users } from '@arago/db/schema';
