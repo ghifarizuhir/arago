@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -261,6 +262,24 @@ export const classAssignments = pgTable("class_assignments", {
   deletedAt: timestamp("deleted_at", { withTimezone: true })
 });
 
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    type: varchar("type", { length: 50 }).notNull(),
+    message: varchar("message", { length: 500 }).notNull(),
+    linkPath: text("link_path"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+  },
+  (t) => [index("notifications_user_created_idx").on(t.userId, t.createdAt)]
+);
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -270,7 +289,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   teachingMaterials: many(teachingMaterials),
   blueprints: many(blueprints),
   assessments: many(assessments),
-  submissions: many(submissions)
+  submissions: many(submissions),
+  notifications: many(notifications)
 }));
 
 export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
@@ -437,3 +457,7 @@ export const classAssignmentsRelations = relations(
     submissions: many(submissions)
   })
 );
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] })
+}));
