@@ -37,7 +37,7 @@ export async function GET() {
   const [me] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.id, session.user.id)).limit(1)
   const workspaceId = await getCurrentWorkspaceId()
   let workspace: { id: string; name: string } | null = null
-  if (workspaceId) {
+  if (workspaceId && z.string().uuid().safeParse(workspaceId).success) {
     const [w] = await db.select({ id: workspaces.id, name: workspaces.name }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1)
     workspace = w ?? null
   }

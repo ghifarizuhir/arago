@@ -8,13 +8,6 @@
       "when": 1781594872663,
       "tag": "0000_charming_synch",
       "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1718550400000,
-      "tag": "0001_add_correct_count",
-      "breakpoints": true
     }
   ]
 }
