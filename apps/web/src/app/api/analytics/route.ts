@@ -21,22 +21,56 @@ export async function GET() {
   const { error } = await requireWorkspaceTeacher(workspaceId)
   if (error) return error
 
-  // Content counts (workspace-scoped, not soft-deleted)
-  const moduleRows = await db
-    .select({ id: teachingModules.id })
-    .from(teachingModules)
-    .where(and(eq(teachingModules.workspaceId, workspaceId), isNull(teachingModules.deletedAt)))
+  // Round 1: independent workspace-scoped queries
+  const [moduleRows, assessmentRows, classRows] = await Promise.all([
+    db
+      .select({ id: teachingModules.id })
+      .from(teachingModules)
+      .where(and(eq(teachingModules.workspaceId, workspaceId), isNull(teachingModules.deletedAt))),
+    db
+      .select({ id: assessments.id, title: assessments.title })
+      .from(assessments)
+      .where(and(eq(assessments.workspaceId, workspaceId), isNull(assessments.deletedAt))),
+    db
+      .select({ id: classes.id })
+      .from(classes)
+      .where(and(eq(classes.workspaceId, workspaceId), isNull(classes.deletedAt))),
+  ])
   const moduleIds = moduleRows.map((m) => m.id)
+  const classIds = classRows.map((c) => c.id)
 
-  const materialRows =
+  // Round 2: depend on moduleIds / classIds
+  const [materialRows, enrollRows, subRows] = await Promise.all([
     moduleIds.length === 0
-      ? []
-      : await db
+      ? Promise.resolve([] as { id: string }[])
+      : db
           .select({ id: teachingMaterials.id })
           .from(teachingMaterials)
-          .where(and(inArray(teachingMaterials.moduleId, moduleIds), isNull(teachingMaterials.deletedAt)))
+          .where(and(inArray(teachingMaterials.moduleId, moduleIds), isNull(teachingMaterials.deletedAt))),
+    classIds.length === 0
+      ? Promise.resolve([] as { studentId: string }[])
+      : db
+          .select({ studentId: classEnrollments.studentId })
+          .from(classEnrollments)
+          .where(inArray(classEnrollments.classId, classIds)),
+    classIds.length === 0
+      ? Promise.resolve([] as { score: number | null; assessmentId: string }[])
+      : db
+          .select({ score: submissions.score, assessmentId: classAssignments.assessmentId })
+          .from(submissions)
+          .innerJoin(classAssignments, eq(submissions.assignmentId, classAssignments.id))
+          .innerJoin(assessments, eq(classAssignments.assessmentId, assessments.id))
+          .where(
+            and(
+              inArray(classAssignments.classId, classIds),
+              isNull(classAssignments.deletedAt),
+              isNull(assessments.deletedAt),
+            ),
+          ),
+  ])
   const materialIds = materialRows.map((m) => m.id)
 
+  // Round 3: depends on materialIds
   const blueprintRows =
     materialIds.length === 0
       ? []
@@ -45,54 +79,27 @@ export async function GET() {
           .from(blueprints)
           .where(and(inArray(blueprints.materialId, materialIds), isNull(blueprints.deletedAt)))
 
-  const assessmentRows = await db
-    .select({ id: assessments.id, title: assessments.title })
-    .from(assessments)
-    .where(and(eq(assessments.workspaceId, workspaceId), isNull(assessments.deletedAt)))
-
-  const classRows = await db
-    .select({ id: classes.id })
-    .from(classes)
-    .where(and(eq(classes.workspaceId, workspaceId), isNull(classes.deletedAt)))
-  const classIds = classRows.map((c) => c.id)
-
-  // Distinct enrolled students across workspace classes
-  const enrollRows =
-    classIds.length === 0
-      ? []
-      : await db
-          .select({ studentId: classEnrollments.studentId })
-          .from(classEnrollments)
-          .where(inArray(classEnrollments.classId, classIds))
   const students = new Set(enrollRows.map((e) => e.studentId)).size
 
-  // Submissions for this workspace's assignments (+ score & assessment for averaging)
-  const subRows =
-    classIds.length === 0
-      ? []
-      : await db
-          .select({
-            score: submissions.score,
-            assessmentId: classAssignments.assessmentId,
-          })
-          .from(submissions)
-          .innerJoin(classAssignments, eq(submissions.assignmentId, classAssignments.id))
-          .where(inArray(classAssignments.classId, classIds))
-
-  // Average score per assessment (JS-side)
-  const byAssessment = new Map<string, { sum: number; n: number }>()
+  // Per-assessment aggregation (JS-side): n = total submissions; avg over scored only.
+  const byAssessment = new Map<string, { sum: number; n: number; scored: number }>()
   for (const s of subRows) {
-    if (s.score === null) continue
-    const cur = byAssessment.get(s.assessmentId) ?? { sum: 0, n: 0 }
-    cur.sum += s.score
+    let cur = byAssessment.get(s.assessmentId)
+    if (!cur) {
+      cur = { sum: 0, n: 0, scored: 0 }
+      byAssessment.set(s.assessmentId, cur)
+    }
     cur.n += 1
-    byAssessment.set(s.assessmentId, cur)
+    if (s.score !== null) {
+      cur.sum += s.score
+      cur.scored += 1
+    }
   }
   const titleOf = new Map(assessmentRows.map((a) => [a.id, a.title]))
-  const avgByAssessment = [...byAssessment.entries()].map(([assessmentId, { sum, n }]) => ({
+  const avgByAssessment = [...byAssessment.entries()].map(([assessmentId, { sum, n, scored }]) => ({
     assessmentId,
     title: titleOf.get(assessmentId) ?? 'Asesmen',
-    avgScore: Math.round(sum / n),
+    avgScore: scored > 0 ? Math.round(sum / scored) : 0,
     submissionCount: n,
   }))
 
