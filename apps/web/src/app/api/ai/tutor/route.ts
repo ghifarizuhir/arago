@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
         eq(workspaceMembers.userId, session.user.id),
         eq(teachingMaterials.status, 'published'),
         isNull(teachingMaterials.deletedAt),
+        isNull(teachingModules.deletedAt),
       ),
     )
     .limit(1)
@@ -48,6 +49,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Material not found' }, { status: 404 })
   }
 
-  const result = streamTutor({ materialContent: material.content ?? '', messages: messages as any })
+  if (!material.content) {
+    return NextResponse.json({ error: 'Material has no content' }, { status: 422 })
+  }
+
+  const result = streamTutor({ materialContent: material.content, messages })
   return result.toDataStreamResponse()
 }

@@ -1,4 +1,4 @@
-import { streamText, type CoreMessage } from 'ai';
+import { streamText } from 'ai';
 import { getModel } from './providers/index.js';
 
 export function buildTutorSystemPrompt(materialContent: string): string {
@@ -18,7 +18,7 @@ ${materialContent}
 
 export function streamTutor(opts: {
   materialContent: string;
-  messages: CoreMessage[];
+  messages: { role: 'user' | 'assistant'; content: string }[];
 }) {
   return streamText({
     model: getModel(),

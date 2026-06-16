@@ -3,6 +3,7 @@ import { db } from '@arago/db/client'
 import { teachingMaterials, teachingModules, workspaceMembers } from '@arago/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
+import { z } from 'zod'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -11,6 +12,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
   if (error || !session) return error!
 
   const { id } = await params
+
+  const idCheck = z.string().uuid().safeParse(id)
+  if (!idCheck.success) {
+    return NextResponse.json({ error: 'Material not found' }, { status: 404 })
+  }
 
   const [material] = await db
     .select({
@@ -27,6 +33,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         eq(workspaceMembers.userId, session.user.id),
         eq(teachingMaterials.status, 'published'),
         isNull(teachingMaterials.deletedAt),
+        isNull(teachingModules.deletedAt),
       ),
     )
     .limit(1)

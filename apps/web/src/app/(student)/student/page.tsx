@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { useSession } from 'next-auth/react'
 
 interface Assessment {
   id: string
@@ -16,15 +14,12 @@ interface Material {
 }
 
 export default function StudentDashboardPage() {
-  const { data: session } = useSession()
   const [assessments, setAssessments] = useState<Assessment[]>([])
   const [materials, setMaterials] = useState<Material[]>([])
   const [loadingAssessments, setLoadingAssessments] = useState(true)
   const [loadingMaterials, setLoadingMaterials] = useState(true)
 
   useEffect(() => {
-    if (!session) return
-
     // Fetch assessments
     fetch('/api/student/submissions')
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
@@ -53,11 +48,7 @@ export default function StudentDashboardPage() {
       .then(({ materials: ms }: { materials: Material[] }) => setMaterials(ms ?? []))
       .catch(() => setMaterials([]))
       .finally(() => setLoadingMaterials(false))
-  }, [session])
-
-  if (!session) {
-    return redirect('/login')
-  }
+  }, [])
 
   return (
     <div className="space-y-8">

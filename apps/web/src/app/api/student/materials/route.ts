@@ -12,7 +12,6 @@ export async function GET() {
     .select({
       id: teachingMaterials.id,
       title: teachingMaterials.title,
-      moduleId: teachingMaterials.moduleId,
     })
     .from(teachingMaterials)
     .innerJoin(teachingModules, eq(teachingMaterials.moduleId, teachingModules.id))
@@ -22,6 +21,7 @@ export async function GET() {
         eq(workspaceMembers.userId, session.user.id),
         eq(teachingMaterials.status, 'published'),
         isNull(teachingMaterials.deletedAt),
+        isNull(teachingModules.deletedAt),
       ),
     )
 
