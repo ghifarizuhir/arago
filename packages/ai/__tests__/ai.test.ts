@@ -1,11 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
-import { MockLanguageModelV1 } from 'ai/test';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import type { LanguageModelV1 } from 'ai';
+import { MockLanguageModelV1, simulateReadableStream } from 'ai/test';
 import { extractModuleContent } from '../src/extract.js';
 import { generateMaterial } from '../src/generate-material.js';
 import { generateBlueprint } from '../src/generate-blueprint.js';
 import { generateAssessment } from '../src/generate-assessment.js';
-import { buildMaterialChatSystemPrompt } from '../src/chat.js';
-import { buildTutorSystemPrompt } from '../src/tutor.js';
+import { buildMaterialChatSystemPrompt, streamMaterialChat } from '../src/chat.js';
+import { buildTutorSystemPrompt, streamTutor } from '../src/tutor.js';
 import { curriculumTemplate } from '../src/templates/curriculum.js';
 import * as providers from '../src/providers/index.js';
 
@@ -216,6 +217,46 @@ describe('@arago/ai', () => {
       expect(p).toContain('materi');
       // must guard against leaking assessment answers
       expect(p).toContain('soal');
+    });
+  });
+
+  function makeStreamModel(text: string): MockLanguageModelV1 {
+    return new MockLanguageModelV1({
+      doStream: async () => ({
+        stream: simulateReadableStream({
+          chunks: [
+            { type: 'text-delta', textDelta: text },
+            { type: 'finish', finishReason: 'stop', usage: { promptTokens: 1, completionTokens: 1 } },
+          ],
+        }),
+        rawCall: { rawPrompt: null, rawSettings: {} },
+      }),
+    });
+  }
+
+  describe('streamMaterialChat', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('uses getModel and streams text through', async () => {
+      const spy = vi.spyOn(providers, 'getModel').mockReturnValue(makeStreamModel('halo') as unknown as LanguageModelV1);
+      const result = streamMaterialChat({ materialContent: '<p>x</p>', messages: [{ role: 'user', content: 'hai' }] });
+      expect(spy).toHaveBeenCalled();
+      let out = '';
+      for await (const chunk of result.textStream) out += chunk;
+      expect(out).toBe('halo');
+    });
+  });
+
+  describe('streamTutor', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('uses getModel and streams text through', async () => {
+      const spy = vi.spyOn(providers, 'getModel').mockReturnValue(makeStreamModel('jawaban') as unknown as LanguageModelV1);
+      const result = streamTutor({ materialContent: '<p>x</p>', messages: [{ role: 'user', content: 'tanya' }] });
+      expect(spy).toHaveBeenCalled();
+      let out = '';
+      for await (const chunk of result.textStream) out += chunk;
+      expect(out).toBe('jawaban');
     });
   });
 });
