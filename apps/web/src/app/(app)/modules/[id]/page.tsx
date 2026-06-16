@@ -1,18 +1,23 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { db } from '@arago/db/client';
 import { teachingModules, teachingMaterials } from '@arago/db/schema';
 import { eq, isNull, and } from 'drizzle-orm';
+import { GenerateMaterialButton } from '@/components/generate-material-button';
+import { getCurrentWorkspaceId } from '@/lib/workspace-context';
 
 type Props = { params: Promise<{ id: string }> };
 
 export default async function ModuleDetailPage({ params }: Props) {
   const { id } = await params;
 
+  const workspaceId = await getCurrentWorkspaceId();
+  if (!workspaceId) redirect('/workspaces');
+
   const [module_] = await db
     .select()
     .from(teachingModules)
-    .where(and(eq(teachingModules.id, id), isNull(teachingModules.deletedAt)))
+    .where(and(eq(teachingModules.id, id), eq(teachingModules.workspaceId, workspaceId), isNull(teachingModules.deletedAt)))
     .limit(1);
 
   if (!module_) notFound();
@@ -40,6 +45,7 @@ export default async function ModuleDetailPage({ params }: Props) {
             {module_.status === 'published' ? 'Diterbitkan' : 'Draf'}
           </span>
         </div>
+        <GenerateMaterialButton moduleId={module_.id} disabled={!module_.extractedText} />
       </div>
 
       {module_.extractedText ? (
