@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { RichTextEditor } from '@/components/editor/rich-text-editor'
 
 type Material = {
@@ -16,11 +17,13 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function MaterialEditorPage() {
   const { materialId } = useParams<{ id: string; materialId: string }>()
+  const router = useRouter()
   const [material, setMaterial] = useState<Material | null>(null)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [loading, setLoading] = useState(true)
+  const [genBlueprint, setGenBlueprint] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -77,6 +80,24 @@ export default function MaterialEditorPage() {
     if (!material) return
     const next = material.status === 'draft' ? 'published' : 'draft'
     await save({ status: next })
+  }
+
+  async function handleGenerateBlueprint() {
+    if (!material) return
+    setGenBlueprint(true)
+    try {
+      const res = await fetch('/api/ai/generate-blueprint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialId: material.id, curriculumType: 'merdeka' }),
+      })
+      if (res.ok) {
+        const { blueprint } = await res.json()
+        router.push(`/blueprints/${blueprint.id}`)
+      }
+    } finally {
+      setGenBlueprint(false)
+    }
   }
 
   if (loading) {
@@ -140,6 +161,15 @@ export default function MaterialEditorPage() {
               ].join(' ')}
             >
               {material.status === 'draft' ? 'Terbitkan' : 'Jadikan Draft'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGenerateBlueprint}
+              disabled={genBlueprint}
+              className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors disabled:opacity-50"
+            >
+              {genBlueprint ? 'Generating...' : 'Generate Kisi-kisi'}
             </button>
           </div>
         </div>

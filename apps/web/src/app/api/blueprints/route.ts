@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { blueprints, teachingMaterials, teachingModules } from '@arago/db/schema'
-import { eq, isNull, and, inArray } from 'drizzle-orm'
+import { eq, isNull, and } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { z } from 'zod'
