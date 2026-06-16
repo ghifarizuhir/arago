@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { db } from '@arago/db/client';
 import { teachingModules, teachingMaterials } from '@arago/db/schema';
 import { eq, isNull, and } from 'drizzle-orm';
+import { GenerateMaterialButton } from '@/components/generate-material-button';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -40,6 +41,7 @@ export default async function ModuleDetailPage({ params }: Props) {
             {module_.status === 'published' ? 'Diterbitkan' : 'Draf'}
           </span>
         </div>
+        <GenerateMaterialButton moduleId={module_.id} disabled={!module_.extractedText} />
       </div>
 
       {module_.extractedText ? (
