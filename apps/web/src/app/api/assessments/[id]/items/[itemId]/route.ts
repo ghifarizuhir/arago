@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { assessmentItems, assessments } from '@arago/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, isNull } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { z } from 'zod'
@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const [assessment] = await db
     .select()
     .from(assessments)
-    .where(and(eq(assessments.id, assessmentId), eq(assessments.workspaceId, workspaceId)))
+    .where(and(eq(assessments.id, assessmentId), eq(assessments.workspaceId, workspaceId), isNull(assessments.deletedAt)))
     .limit(1)
 
   if (!assessment) {
@@ -83,7 +83,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const [assessment] = await db
     .select()
     .from(assessments)
-    .where(and(eq(assessments.id, assessmentId), eq(assessments.workspaceId, workspaceId)))
+    .where(and(eq(assessments.id, assessmentId), eq(assessments.workspaceId, workspaceId), isNull(assessments.deletedAt)))
     .limit(1)
 
   if (!assessment) {

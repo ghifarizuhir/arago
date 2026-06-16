@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
-import { assessments, assessmentBlueprints } from '@arago/db/schema'
-import { eq, isNull, and, desc } from 'drizzle-orm'
+import { assessments, assessmentBlueprints, blueprints, teachingMaterials, teachingModules } from '@arago/db/schema'
+import { eq, isNull, and, desc, inArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { z } from 'zod'
@@ -45,6 +45,28 @@ export async function POST(req: NextRequest) {
   }
 
   const { title, blueprintIds } = parsed.data
+
+  // Validate that all blueprintIds belong to the active workspace
+  const validRows = await db
+    .select({ id: blueprints.id })
+    .from(blueprints)
+    .innerJoin(teachingMaterials, eq(blueprints.materialId, teachingMaterials.id))
+    .innerJoin(teachingModules, eq(teachingMaterials.moduleId, teachingModules.id))
+    .where(
+      and(
+        inArray(blueprints.id, blueprintIds),
+        eq(teachingModules.workspaceId, workspaceId),
+        isNull(blueprints.deletedAt),
+      ),
+    )
+
+  const validIds = new Set(validRows.map((r) => r.id))
+  if (blueprintIds.some((id) => !validIds.has(id))) {
+    return NextResponse.json(
+      { error: 'One or more blueprints are not in this workspace' },
+      { status: 422 },
+    )
+  }
 
   const [assessment] = await db
     .insert(assessments)

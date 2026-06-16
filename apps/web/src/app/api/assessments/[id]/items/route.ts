@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const [assessment] = await db
     .select()
     .from(assessments)
-    .where(and(eq(assessments.id, id), eq(assessments.workspaceId, workspaceId)))
+    .where(and(eq(assessments.id, id), eq(assessments.workspaceId, workspaceId), isNull(assessments.deletedAt)))
     .limit(1)
 
   if (!assessment) {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const [assessment] = await db
     .select()
     .from(assessments)
-    .where(and(eq(assessments.id, assessmentId), eq(assessments.workspaceId, workspaceId)))
+    .where(and(eq(assessments.id, assessmentId), eq(assessments.workspaceId, workspaceId), isNull(assessments.deletedAt)))
     .limit(1)
 
   if (!assessment) {
