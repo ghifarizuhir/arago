@@ -4,6 +4,7 @@ import { extractModuleContent } from '../src/extract.js';
 import { generateMaterial } from '../src/generate-material.js';
 import { generateBlueprint } from '../src/generate-blueprint.js';
 import { generateAssessment } from '../src/generate-assessment.js';
+import { buildMaterialChatSystemPrompt } from '../src/chat.js';
 import * as providers from '../src/providers/index.js';
 
 function makeMockModel(responseObject: unknown): MockLanguageModelV1 {
@@ -142,6 +143,19 @@ describe('@arago/ai', () => {
         { id: 'IND-001', description: 'desc', bloomLevel: 'C2', competency: 'comp' },
       ]);
       expect(result.items).toHaveLength(10);
+    });
+  });
+
+  describe('buildMaterialChatSystemPrompt', () => {
+    it('embeds the material content and the apply-fence instruction', () => {
+      const prompt = buildMaterialChatSystemPrompt('<h2>Sel Tumbuhan</h2><p>Dinding sel...</p>');
+      expect(prompt).toContain('<h2>Sel Tumbuhan</h2>');
+      expect(prompt).toContain('```html');
+      expect(prompt.toLowerCase()).toContain('bahasa indonesia');
+    });
+
+    it('handles empty material content without throwing', () => {
+      expect(() => buildMaterialChatSystemPrompt('')).not.toThrow();
     });
   });
 });
