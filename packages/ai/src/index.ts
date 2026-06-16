@@ -17,3 +17,4 @@ export { generateMaterial } from './generate-material.js';
 export { generateBlueprint } from './generate-blueprint.js';
 export { generateAssessment } from './generate-assessment.js';
 export { buildMaterialChatSystemPrompt, streamMaterialChat } from './chat.js';
+export { buildTutorSystemPrompt, streamTutor } from './tutor.js';
