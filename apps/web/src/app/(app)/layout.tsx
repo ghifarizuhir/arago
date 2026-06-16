@@ -4,6 +4,7 @@ import { db } from '@arago/db/client';
 import { workspaces } from '@arago/db/schema';
 import { eq } from 'drizzle-orm';
 import { getCurrentWorkspaceId } from '@/lib/workspace-context';
+import { getWorkspaceMember } from '@/lib/workspace';
 import { Sidebar } from '@/components/sidebar';
 
 export default async function AppLayout({
@@ -16,6 +17,9 @@ export default async function AppLayout({
 
   const workspaceId = await getCurrentWorkspaceId();
   if (!workspaceId) redirect('/workspaces');
+
+  const member = await getWorkspaceMember(workspaceId, session.user.id);
+  if (!member) redirect('/workspaces');
 
   const [workspace] = await db
     .select()
