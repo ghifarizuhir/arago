@@ -2,15 +2,14 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { workspaceMembers, users } from '@arago/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { requireAuth } from '@/lib/auth/guards'
+import { requireWorkspaceTeacher } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 
 export async function GET(_req: NextRequest) {
-  const { error } = await requireAuth()
-  if (error) return error
-
   const workspaceId = await getCurrentWorkspaceId()
   if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
+  const { error } = await requireWorkspaceTeacher(workspaceId)
+  if (error) return error
 
   const members = await db
     .select({ userId: workspaceMembers.userId, name: users.name, email: users.email })

@@ -18,6 +18,7 @@ export default function ClassDetailPage() {
   const [members, setMembers] = useState<Member[]>([])
   const [wsMaterials, setWsMaterials] = useState<Material[]>([])
   const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/classes/${id}`)
@@ -47,39 +48,73 @@ export default function ClassDetailPage() {
   }, [load])
 
   async function rename() {
-    await fetch(`/api/classes/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    })
+    if (name === cls?.name || !name.trim()) return
+    try {
+      const res = await fetch(`/api/classes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      if (res.ok) {
+        setCls((c) => (c ? { ...c, name } : c))
+      } else {
+        setName(cls?.name ?? '')
+      }
+    } catch {
+      setName(cls?.name ?? '')
+    }
   }
 
   async function enroll(studentId: string) {
-    await fetch(`/api/classes/${id}/enrollments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentIds: [studentId] }),
-    })
-    await load()
+    try {
+      setBusy(true)
+      await fetch(`/api/classes/${id}/enrollments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentIds: [studentId] }),
+      })
+      await load()
+    } catch {
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function unenroll(studentId: string) {
-    await fetch(`/api/classes/${id}/enrollments/${studentId}`, { method: 'DELETE' })
-    await load()
+    try {
+      setBusy(true)
+      await fetch(`/api/classes/${id}/enrollments/${studentId}`, { method: 'DELETE' })
+      await load()
+    } catch {
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function assignMaterial(materialId: string) {
-    await fetch(`/api/classes/${id}/materials`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ materialIds: [materialId] }),
-    })
-    await load()
+    try {
+      setBusy(true)
+      await fetch(`/api/classes/${id}/materials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialIds: [materialId] }),
+      })
+      await load()
+    } catch {
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function unassignMaterial(materialId: string) {
-    await fetch(`/api/classes/${id}/materials/${materialId}`, { method: 'DELETE' })
-    await load()
+    try {
+      setBusy(true)
+      await fetch(`/api/classes/${id}/materials/${materialId}`, { method: 'DELETE' })
+      await load()
+    } catch {
+    } finally {
+      setBusy(false)
+    }
   }
 
   if (loading) {
@@ -115,7 +150,7 @@ export default function ClassDetailPage() {
             {enrolled.map((e) => (
               <li key={e.studentId} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
                 <span className="text-sm text-neutral-800">{e.name} <span className="text-neutral-400">{e.email}</span></span>
-                <button onClick={() => unenroll(e.studentId)} className="text-xs text-red-600 hover:underline">Keluarkan</button>
+                <button disabled={busy} onClick={() => unenroll(e.studentId)} className="text-xs text-red-600 hover:underline">Keluarkan</button>
               </li>
             ))}
           </ul>
@@ -125,7 +160,7 @@ export default function ClassDetailPage() {
           {members.filter((m) => !enrolledIds.has(m.userId)).map((m) => (
             <li key={m.userId} className="flex items-center justify-between p-2 text-sm">
               <span>{m.name} <span className="text-neutral-400">{m.email}</span></span>
-              <button onClick={() => enroll(m.userId)} className="text-xs text-blue-600 hover:underline">Tambah</button>
+              <button disabled={busy} onClick={() => enroll(m.userId)} className="text-xs text-blue-600 hover:underline">Tambah</button>
             </li>
           ))}
         </ul>
@@ -140,7 +175,7 @@ export default function ClassDetailPage() {
             {materials.map((m) => (
               <li key={m.materialId} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
                 <span className="text-sm text-neutral-800">{m.title}</span>
-                <button onClick={() => unassignMaterial(m.materialId)} className="text-xs text-red-600 hover:underline">Hapus</button>
+                <button disabled={busy} onClick={() => unassignMaterial(m.materialId)} className="text-xs text-red-600 hover:underline">Hapus</button>
               </li>
             ))}
           </ul>
@@ -150,7 +185,7 @@ export default function ClassDetailPage() {
           {wsMaterials.filter((m) => !assignedIds.has(m.id)).map((m) => (
             <li key={m.id} className="flex items-center justify-between p-2 text-sm">
               <span>{m.title}</span>
-              <button onClick={() => assignMaterial(m.id)} className="text-xs text-blue-600 hover:underline">Tambah</button>
+              <button disabled={busy} onClick={() => assignMaterial(m.id)} className="text-xs text-blue-600 hover:underline">Tambah</button>
             </li>
           ))}
         </ul>

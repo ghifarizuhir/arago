@@ -2,23 +2,22 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { classes, classEnrollments } from '@arago/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
-import { requireAuth } from '@/lib/auth/guards'
+import { requireWorkspaceTeacher } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { z } from 'zod'
 
 type Params = { params: Promise<{ id: string; studentId: string }> }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { error, session } = await requireAuth()
+  const workspaceId = await getCurrentWorkspaceId()
+  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
+  const { error, session } = await requireWorkspaceTeacher(workspaceId)
   if (error || !session) return error!
 
   const { id, studentId } = await params
   if (!z.string().uuid().safeParse(id).success || !z.string().uuid().safeParse(studentId).success) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
-
-  const workspaceId = await getCurrentWorkspaceId()
-  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
 
   const [cls] = await db
     .select({ id: classes.id })

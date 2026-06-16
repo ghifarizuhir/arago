@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { classes, classMaterials, teachingMaterials, teachingModules } from '@arago/db/schema'
 import { eq, isNull, and, inArray } from 'drizzle-orm'
-import { requireAuth } from '@/lib/auth/guards'
+import { requireWorkspaceTeacher } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { AssignMaterialsSchema } from '@arago/validators'
 import { z } from 'zod'
@@ -10,16 +10,15 @@ import { z } from 'zod'
 type Params = { params: Promise<{ id: string }> }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const { error, session } = await requireAuth()
+  const workspaceId = await getCurrentWorkspaceId()
+  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
+  const { error, session } = await requireWorkspaceTeacher(workspaceId)
   if (error || !session) return error!
 
   const { id } = await params
   if (!z.string().uuid().safeParse(id).success) {
     return NextResponse.json({ error: 'Class not found' }, { status: 404 })
   }
-
-  const workspaceId = await getCurrentWorkspaceId()
-  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
 
   const body = await req.json().catch(() => null)
   const parsed = AssignMaterialsSchema.safeParse(body)

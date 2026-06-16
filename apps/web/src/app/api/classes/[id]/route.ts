@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { classes, classEnrollments, classMaterials, teachingMaterials, users } from '@arago/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
-import { requireAuth } from '@/lib/auth/guards'
+import { requireWorkspaceTeacher } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { z } from 'zod'
 
@@ -22,15 +22,14 @@ async function loadScopedClass(id: string, workspaceId: string) {
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { error } = await requireAuth()
+  const workspaceId = await getCurrentWorkspaceId()
+  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
+  const { error } = await requireWorkspaceTeacher(workspaceId)
   if (error) return error
 
   const { id } = await params
   const idCheck = z.string().uuid().safeParse(id)
   if (!idCheck.success) return NextResponse.json({ error: 'Class not found' }, { status: 404 })
-
-  const workspaceId = await getCurrentWorkspaceId()
-  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
 
   const cls = await loadScopedClass(id, workspaceId)
   if (!cls) return NextResponse.json({ error: 'Class not found' }, { status: 404 })
@@ -45,21 +44,20 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .select({ materialId: classMaterials.materialId, title: teachingMaterials.title })
     .from(classMaterials)
     .innerJoin(teachingMaterials, eq(classMaterials.materialId, teachingMaterials.id))
-    .where(eq(classMaterials.classId, id))
+    .where(and(eq(classMaterials.classId, id), isNull(teachingMaterials.deletedAt)))
 
   return NextResponse.json({ class: cls, enrolled, materials })
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { error, session } = await requireAuth()
+  const workspaceId = await getCurrentWorkspaceId()
+  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
+  const { error, session } = await requireWorkspaceTeacher(workspaceId)
   if (error || !session) return error!
 
   const { id } = await params
   const idCheck = z.string().uuid().safeParse(id)
   if (!idCheck.success) return NextResponse.json({ error: 'Class not found' }, { status: 404 })
-
-  const workspaceId = await getCurrentWorkspaceId()
-  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
 
   const body = await req.json().catch(() => null)
   const parsed = patchSchema.safeParse(body)
@@ -67,6 +65,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const cls = await loadScopedClass(id, workspaceId)
   if (!cls) return NextResponse.json({ error: 'Class not found' }, { status: 404 })
+
+  if (cls.teacherId !== session.user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const [updated] = await db
     .update(classes)
@@ -78,18 +80,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { error, session } = await requireAuth()
+  const workspaceId = await getCurrentWorkspaceId()
+  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
+  const { error, session } = await requireWorkspaceTeacher(workspaceId)
   if (error || !session) return error!
 
   const { id } = await params
   const idCheck = z.string().uuid().safeParse(id)
   if (!idCheck.success) return NextResponse.json({ error: 'Class not found' }, { status: 404 })
 
-  const workspaceId = await getCurrentWorkspaceId()
-  if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
-
   const cls = await loadScopedClass(id, workspaceId)
   if (!cls) return NextResponse.json({ error: 'Class not found' }, { status: 404 })
+
+  if (cls.teacherId !== session.user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   await db.update(classes).set({ deletedAt: new Date() }).where(eq(classes.id, id))
 

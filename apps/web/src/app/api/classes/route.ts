@@ -2,18 +2,17 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { classes } from '@arago/db/schema'
 import { eq, isNull, and, desc } from 'drizzle-orm'
-import { requireAuth } from '@/lib/auth/guards'
+import { requireWorkspaceTeacher } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { CreateClassSchema } from '@arago/validators'
 
 export async function GET(_req: NextRequest) {
-  const { error } = await requireAuth()
-  if (error) return error
-
   const workspaceId = await getCurrentWorkspaceId()
   if (!workspaceId) {
     return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
   }
+  const { error } = await requireWorkspaceTeacher(workspaceId)
+  if (error) return error
 
   const result = await db
     .select()
@@ -25,13 +24,12 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, session } = await requireAuth()
-  if (error || !session) return error!
-
   const workspaceId = await getCurrentWorkspaceId()
   if (!workspaceId) {
     return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
   }
+  const { error, session } = await requireWorkspaceTeacher(workspaceId)
+  if (error || !session) return error!
 
   const body = await req.json().catch(() => null)
   const parsed = CreateClassSchema.safeParse(body)
