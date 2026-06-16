@@ -2,11 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@arago/db", "@arago/ai", "@arago/validators", "@arago/test-utils"],
-  // typedRoutes disabled during incremental Phase 1 build: routes are added slice-by-slice,
-  // so the link graph is intentionally incomplete and dynamic router.push(string) is used.
-  // Re-enable in the final Phase 1 slice once all routes exist.
   experimental: {
-    typedRoutes: false
+    typedRoutes: true
   },
   images: {
     remotePatterns: [
@@ -16,6 +13,19 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**"
       }
     ]
+  },
+  // The workspace packages use NodeNext ESM `.js` import specifiers that resolve to
+  // `.ts` sources. tsc accepts these, but the webpack build needs to be told to try
+  // `.ts`/`.tsx` when it sees a `.js` import. Mirror the same for Turbopack (dev).
+  webpack: (config) => {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".tsx", ".js"],
+      ".mjs": [".mts", ".mjs"]
+    };
+    return config;
+  },
+  turbopack: {
+    resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".mjs"]
   }
 };
 

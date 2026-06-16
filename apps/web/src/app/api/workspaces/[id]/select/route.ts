@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { requireWorkspaceMember } from '@/lib/auth/guards';
 import { cookies } from 'next/headers';
 import { WORKSPACE_COOKIE } from '@/lib/workspace-context';

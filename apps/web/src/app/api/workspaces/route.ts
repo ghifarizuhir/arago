@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { CreateWorkspaceSchema } from '@arago/validators';
 import { requireAuth } from '@/lib/auth/guards';
 import { createWorkspace } from '@/lib/workspace';

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { assessmentItems, assessments } from '@arago/db/schema'
 import { eq, asc, and, isNull } from 'drizzle-orm'
