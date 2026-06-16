@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
+import type { CurriculumType } from '@arago/validators'
 import { RichTextEditor } from '@/components/editor/rich-text-editor'
 import { MaterialChat } from '@/components/material-chat'
 
@@ -25,7 +26,7 @@ export default function MaterialEditorPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [loading, setLoading] = useState(true)
   const [genBlueprint, setGenBlueprint] = useState(false)
-  const [genCurriculum, setGenCurriculum] = useState<'merdeka' | 'k13' | 'custom'>('merdeka')
+  const [genCurriculum, setGenCurriculum] = useState<CurriculumType>('merdeka')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -182,7 +183,7 @@ export default function MaterialEditorPage() {
               </label>
               <select
                 value={genCurriculum}
-                onChange={(e) => setGenCurriculum(e.target.value as 'merdeka' | 'k13' | 'custom')}
+                onChange={(e) => setGenCurriculum(e.target.value as CurriculumType)}
                 className="w-full px-2 py-1.5 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:border-neutral-400"
               >
                 <option value="merdeka">Kurikulum Merdeka</option>

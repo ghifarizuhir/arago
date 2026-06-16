@@ -1,4 +1,4 @@
-export type CurriculumType = 'merdeka' | 'k13' | 'custom';
+import type { CurriculumType } from '@arago/validators';
 
 const MERDEKA = `Kerangka: Kurikulum Merdeka.
 - Petakan indikator ke Capaian Pembelajaran (CP) sesuai Fase (A–F) yang relevan dengan jenjang materi.
