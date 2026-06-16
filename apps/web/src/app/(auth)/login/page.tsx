@@ -4,6 +4,7 @@ import { Suspense, useState, type FormEvent } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { type Route } from 'next';
 
 function LoginPageInner() {
   const router = useRouter();
@@ -36,7 +37,7 @@ function LoginPageInner() {
       return;
     }
 
-    router.push(callbackUrl);
+    router.push(callbackUrl as Route);
   }
 
   return (
