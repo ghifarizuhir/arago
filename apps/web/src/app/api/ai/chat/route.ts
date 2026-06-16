@@ -11,7 +11,7 @@ const bodySchema = z.object({
   materialId: z.string().uuid(),
   messages: z.array(
     z.object({
-      role: z.enum(['user', 'assistant', 'system']),
+      role: z.enum(['user', 'assistant']),
       content: z.string(),
     }),
   ),
@@ -52,8 +52,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Material not found' }, { status: 404 })
   }
 
+  if (!material.content) {
+    return NextResponse.json({ error: 'Material has no content' }, { status: 422 })
+  }
+
   const result = streamMaterialChat({
-    materialContent: material.content ?? '',
+    materialContent: material.content,
     messages,
   })
 

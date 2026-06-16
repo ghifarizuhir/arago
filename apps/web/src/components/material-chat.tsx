@@ -13,7 +13,7 @@ const CHIPS = [
 export function extractRevisedHtml(text: string): string | null {
   const matches = [...text.matchAll(/```html\s*([\s\S]*?)```/g)]
   const last = matches[matches.length - 1]
-  return last ? (last[1]?.trim() ?? null) : null
+  return last ? last[1]!.trim() : null
 }
 
 interface MaterialChatProps {
@@ -28,6 +28,10 @@ export function MaterialChat({ materialId, onApply }: MaterialChatProps) {
   })
 
   const busy = status === 'streaming' || status === 'submitted'
+
+  const lastApplicableId = [...messages]
+    .reverse()
+    .find((m) => m.role === 'assistant' && extractRevisedHtml(m.content) !== null)?.id
 
   return (
     <div className="flex flex-col h-full border border-neutral-200 rounded-lg bg-white">
@@ -49,7 +53,7 @@ export function MaterialChat({ materialId, onApply }: MaterialChatProps) {
                 {m.role === 'user' ? 'Anda' : 'AI'}
               </div>
               <div className="whitespace-pre-wrap text-neutral-700">{m.content}</div>
-              {revised && (
+              {revised && m.id === lastApplicableId && (
                 <button
                   type="button"
                   onClick={() => onApply(revised)}
