@@ -178,9 +178,9 @@ export const assessmentItems = pgTable("assessment_items", {
 
 export const submissions = pgTable("submissions", {
   id: uuid("id").defaultRandom().primaryKey(),
-  assessmentId: uuid("assessment_id")
+  assignmentId: uuid("assignment_id")
     .notNull()
-    .references(() => assessments.id),
+    .references(() => classAssignments.id),
   studentId: uuid("student_id")
     .notNull()
     .references(() => users.id),
@@ -342,8 +342,7 @@ export const assessmentsRelations = relations(
       references: [users.id]
     }),
     assessmentBlueprints: many(assessmentBlueprints),
-    items: many(assessmentItems),
-    submissions: many(submissions)
+    items: many(assessmentItems)
   })
 );
 
@@ -372,9 +371,9 @@ export const assessmentItemsRelations = relations(
 );
 
 export const submissionsRelations = relations(submissions, ({ one }) => ({
-  assessment: one(assessments, {
-    fields: [submissions.assessmentId],
-    references: [assessments.id]
+  assignment: one(classAssignments, {
+    fields: [submissions.assignmentId],
+    references: [classAssignments.id]
   }),
   student: one(users, {
     fields: [submissions.studentId],
