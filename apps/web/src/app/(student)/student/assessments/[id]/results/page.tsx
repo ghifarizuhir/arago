@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -8,7 +8,7 @@ type Option = { id: string; text: string }
 type AssessmentItem = { id: string; question: string; options: Option[]; correctAnswer: string; sortOrder: number }
 type Submission = { id: string; score: number; totalItems: number; answers: Record<string, string>; submittedAt: string }
 
-export default function ResultsPage() {
+function ResultsPageInner() {
   const { id } = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -138,5 +138,13 @@ export default function ResultsPage() {
         Kembali ke Dashboard
       </Link>
     </div>
+  )
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResultsPageInner />
+    </Suspense>
   )
 }
