@@ -1,66 +1,62 @@
-'use client'
-
-import { useEffect, useState } from 'react'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { db } from '@arago/db/client'
+import { assessments, teachingMaterials, teachingModules, workspaceMembers } from '@arago/db/schema'
+import { eq, isNull, and, inArray } from 'drizzle-orm'
+import { requireAuth } from '@/lib/auth/guards'
 
-interface Assessment {
-  id: string
-  title: string
-}
+export default async function StudentDashboardPage() {
+  const { error, session } = await requireAuth()
+  if (error || !session) return redirect('/login')
 
-interface Material {
-  id: string
-  title: string
-}
+  const memberships = await db
+    .select({ workspaceId: workspaceMembers.workspaceId })
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.userId, session.user.id))
 
-export default function StudentDashboardPage() {
-  const [assessments, setAssessments] = useState<Assessment[]>([])
-  const [materials, setMaterials] = useState<Material[]>([])
-  const [loadingAssessments, setLoadingAssessments] = useState(true)
-  const [loadingMaterials, setLoadingMaterials] = useState(true)
+  const workspaceIds = memberships.map((m) => m.workspaceId)
 
-  useEffect(() => {
-    // Fetch assessments
-    fetch('/api/student/submissions')
-      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
-      .then((data) => {
-        const uniqueAssessments: Assessment[] = []
-        const seen = new Set<string>()
-        if (Array.isArray(data)) {
-          for (const item of data) {
-            if (item.assessment && !seen.has(item.assessment.id)) {
-              seen.add(item.assessment.id)
-              uniqueAssessments.push({
-                id: item.assessment.id,
-                title: item.assessment.title,
-              })
-            }
-          }
-        }
-        setAssessments(uniqueAssessments)
-      })
-      .catch(() => setAssessments([]))
-      .finally(() => setLoadingAssessments(false))
+  const publishedAssessments =
+    workspaceIds.length === 0
+      ? []
+      : await db
+          .select()
+          .from(assessments)
+          .where(
+            and(
+              inArray(assessments.workspaceId, workspaceIds),
+              eq(assessments.status, 'published'),
+              isNull(assessments.deletedAt),
+            ),
+          )
+          .orderBy(assessments.createdAt)
 
-    // Fetch materials
-    fetch('/api/student/materials')
-      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
-      .then(({ materials: ms }: { materials: Material[] }) => setMaterials(ms ?? []))
-      .catch(() => setMaterials([]))
-      .finally(() => setLoadingMaterials(false))
-  }, [])
+  const publishedMaterials =
+    workspaceIds.length === 0
+      ? []
+      : await db
+          .select({ id: teachingMaterials.id, title: teachingMaterials.title })
+          .from(teachingMaterials)
+          .innerJoin(teachingModules, eq(teachingMaterials.moduleId, teachingModules.id))
+          .where(
+            and(
+              inArray(teachingModules.workspaceId, workspaceIds),
+              eq(teachingMaterials.status, 'published'),
+              isNull(teachingMaterials.deletedAt),
+              isNull(teachingModules.deletedAt),
+            ),
+          )
+          .orderBy(teachingMaterials.createdAt)
 
   return (
     <div className="space-y-8">
       <section>
         <h2 className="text-lg font-semibold text-neutral-900 mb-4">Bahan Ajar</h2>
-        {loadingMaterials ? (
-          <div className="text-sm text-neutral-400">Memuat bahan ajar...</div>
-        ) : materials.length === 0 ? (
+        {publishedMaterials.length === 0 ? (
           <p className="text-sm text-neutral-400">Belum ada bahan ajar.</p>
         ) : (
           <ul className="space-y-2">
-            {materials.map((m) => (
+            {publishedMaterials.map((m) => (
               <li key={m.id}>
                 <Link
                   href={`/student/materials/${m.id}`}
@@ -76,13 +72,11 @@ export default function StudentDashboardPage() {
 
       <section>
         <h2 className="text-lg font-semibold text-neutral-900 mb-4">Asesmen Tersedia</h2>
-        {loadingAssessments ? (
-          <div className="text-sm text-neutral-400">Memuat asesmen...</div>
-        ) : assessments.length === 0 ? (
+        {publishedAssessments.length === 0 ? (
           <div className="text-sm text-neutral-400">Belum ada asesmen yang tersedia.</div>
         ) : (
           <ul className="space-y-3">
-            {assessments.map((a) => (
+            {publishedAssessments.map((a) => (
               <li key={a.id}>
                 <Link
                   href={`/student/assessments/${a.id}`}
