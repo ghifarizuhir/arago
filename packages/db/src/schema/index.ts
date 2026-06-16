@@ -193,6 +193,68 @@ export const submissions = pgTable("submissions", {
   gradedAt: timestamp("graded_at", { withTimezone: true })
 });
 
+// ─── Classes (Kelas) ────────────────────────────────────────────────────────
+
+export const classes = pgTable("classes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id")
+    .notNull()
+    .references(() => workspaces.id),
+  teacherId: uuid("teacher_id")
+    .notNull()
+    .references(() => users.id),
+  name: varchar("name", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true })
+});
+
+export const classEnrollments = pgTable(
+  "class_enrollments",
+  {
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => users.id),
+    enrolledAt: timestamp("enrolled_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+  },
+  (t) => [primaryKey({ columns: [t.classId, t.studentId] })]
+);
+
+export const classMaterials = pgTable(
+  "class_materials",
+  {
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id),
+    materialId: uuid("material_id")
+      .notNull()
+      .references(() => teachingMaterials.id)
+  },
+  (t) => [primaryKey({ columns: [t.classId, t.materialId] })]
+);
+
+export const classAssignments = pgTable("class_assignments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  classId: uuid("class_id")
+    .notNull()
+    .references(() => classes.id),
+  assessmentId: uuid("assessment_id")
+    .notNull()
+    .references(() => assessments.id),
+  openAt: timestamp("open_at", { withTimezone: true }).notNull(),
+  dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true })
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -319,3 +381,54 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
     references: [users.id]
   })
 }));
+
+export const classesRelations = relations(classes, ({ one, many }) => ({
+  workspace: one(workspaces, {
+    fields: [classes.workspaceId],
+    references: [workspaces.id]
+  }),
+  teacher: one(users, { fields: [classes.teacherId], references: [users.id] }),
+  enrollments: many(classEnrollments),
+  materials: many(classMaterials),
+  assignments: many(classAssignments)
+}));
+
+export const classEnrollmentsRelations = relations(
+  classEnrollments,
+  ({ one }) => ({
+    class: one(classes, {
+      fields: [classEnrollments.classId],
+      references: [classes.id]
+    }),
+    student: one(users, {
+      fields: [classEnrollments.studentId],
+      references: [users.id]
+    })
+  })
+);
+
+export const classMaterialsRelations = relations(classMaterials, ({ one }) => ({
+  class: one(classes, {
+    fields: [classMaterials.classId],
+    references: [classes.id]
+  }),
+  material: one(teachingMaterials, {
+    fields: [classMaterials.materialId],
+    references: [teachingMaterials.id]
+  })
+}));
+
+export const classAssignmentsRelations = relations(
+  classAssignments,
+  ({ one, many }) => ({
+    class: one(classes, {
+      fields: [classAssignments.classId],
+      references: [classes.id]
+    }),
+    assessment: one(assessments, {
+      fields: [classAssignments.assessmentId],
+      references: [assessments.id]
+    }),
+    submissions: many(submissions)
+  })
+);

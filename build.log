@@ -1,0 +1,301 @@
+
+> @arago/web@0.0.1 build /home/ghifari/Project/arago/apps/web
+> next build
+
+ ⚠ `experimental.typedRoutes` has been moved to `typedRoutes`. Please update your next.config.ts file accordingly.
+   ▲ Next.js 15.5.19
+   - Experiments (use with caution):
+     ⨯ typedRoutes
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (128kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⚠ Compiled with warnings in 21.6s
+
+../../node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs/dist/bcrypt.js
+A Node.js API is used (process.nextTick at line: 351) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs/dist/bcrypt.js
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs/dist/bcrypt.js
+A Node.js API is used (setImmediate at line: 352) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs/dist/bcrypt.js
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs/dist/bcrypt.js
+A Node.js API is used (setImmediate at line: 352) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs/dist/bcrypt.js
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs/dist/bcrypt.js
+A Node.js API is used (process.nextTick at line: 352) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/bcryptjs@2.4.3/node_modules/bcryptjs/dist/bcrypt.js
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/lib/deflate.js
+A Node.js API is used (CompressionStream at line: 10) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/lib/deflate.js
+../../node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/jwe/flattened/decrypt.js
+../../node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js
+../../node_modules/.pnpm/@auth+core@0.41.2/node_modules/@auth/core/jwt.js
+../../node_modules/.pnpm/@auth+core@0.41.2/node_modules/@auth/core/lib/init.js
+../../node_modules/.pnpm/@auth+core@0.41.2/node_modules/@auth/core/lib/index.js
+../../node_modules/.pnpm/@auth+core@0.41.2/node_modules/@auth/core/index.js
+../../node_modules/.pnpm/next-auth@5.0.0-beta.31_next@15.5.19_@babel+core@7.29.7_@opentelemetry+api@1.9.0_react-dom@19_sq7775fiqx2tpgbunnimqwoi6m/node_modules/next-auth/index.js
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/lib/deflate.js
+A Node.js API is used (DecompressionStream at line: 26) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/lib/deflate.js
+../../node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/jwe/flattened/decrypt.js
+../../node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js
+../../node_modules/.pnpm/@auth+core@0.41.2/node_modules/@auth/core/jwt.js
+../../node_modules/.pnpm/@auth+core@0.41.2/node_modules/@auth/core/lib/init.js
+../../node_modules/.pnpm/@auth+core@0.41.2/node_modules/@auth/core/lib/index.js
+../../node_modules/.pnpm/@auth+core@0.41.2/node_modules/@auth/core/index.js
+../../node_modules/.pnpm/next-auth@5.0.0-beta.31_next@15.5.19_@babel+core@7.29.7_@opentelemetry+api@1.9.0_react-dom@19_sq7775fiqx2tpgbunnimqwoi6m/node_modules/next-auth/index.js
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js module is loaded ('net' at line 1) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js module is loaded ('tls' at line 2) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js module is loaded ('crypto' at line 3) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js module is loaded ('stream' at line 4) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js module is loaded ('perf_hooks' at line 5) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js API is used (setImmediate at line: 250) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js API is used (clearImmediate at line: 256) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js API is used (clearImmediate at line: 427) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+A Node.js API is used (clearImmediate at line: 440) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+A Node.js module is loaded ('os' at line 1) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+A Node.js module is loaded ('fs' at line 2) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/large.js
+A Node.js module is loaded ('stream' at line 1) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace for requested module:
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/large.js
+../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/index.js
+../../packages/db/src/client.ts
+./src/lib/auth/password.ts
+./src/lib/auth/index.ts
+
+   Linting and checking validity of types ...
+
+ ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
+
+./src/app/api/auth/register/route.ts
+48:69  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/lib/__tests__/extract-text.test.ts
+16:70  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/middleware.ts
+17:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/35) ...
+   Generating static pages (8/35) 
+   Generating static pages (17/35) 
+   Generating static pages (26/35) 
+ ✓ Generating static pages (35/35)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                       Size  First Load JS
+┌ ○ /                                            226 B         103 kB
+├ ○ /_not-found                                  998 B         104 kB
+├ ƒ /api/ai/chat                                 226 B         103 kB
+├ ƒ /api/ai/extract-module                       226 B         103 kB
+├ ƒ /api/ai/generate-assessment                  226 B         103 kB
+├ ƒ /api/ai/generate-blueprint                   226 B         103 kB
+├ ƒ /api/ai/generate-material                    226 B         103 kB
+├ ƒ /api/ai/tutor                                226 B         103 kB
+├ ƒ /api/assessments                             226 B         103 kB
+├ ƒ /api/assessments/[id]                        226 B         103 kB
+├ ƒ /api/assessments/[id]/items                  226 B         103 kB
+├ ƒ /api/assessments/[id]/items/[itemId]         226 B         103 kB
+├ ƒ /api/auth/[...nextauth]                      226 B         103 kB
+├ ƒ /api/auth/register                           226 B         103 kB
+├ ƒ /api/blueprints                              226 B         103 kB
+├ ƒ /api/blueprints/[id]                         226 B         103 kB
+├ ƒ /api/classes                                 226 B         103 kB
+├ ƒ /api/classes/[id]                            226 B         103 kB
+├ ƒ /api/classes/[id]/enrollments                226 B         103 kB
+├ ƒ /api/classes/[id]/enrollments/[studentId]    226 B         103 kB
+├ ƒ /api/classes/[id]/materials                  226 B         103 kB
+├ ƒ /api/classes/[id]/materials/[materialId]     226 B         103 kB
+├ ƒ /api/materials                               226 B         103 kB
+├ ƒ /api/materials/[id]                          226 B         103 kB
+├ ƒ /api/modules                                 226 B         103 kB
+├ ƒ /api/modules/[id]                            226 B         103 kB
+├ ƒ /api/student/materials/[id]                  226 B         103 kB
+├ ƒ /api/student/submissions                     226 B         103 kB
+├ ƒ /api/student/submissions/[id]                226 B         103 kB
+├ ƒ /api/upload/module                           226 B         103 kB
+├ ƒ /api/workspace-blueprints                    226 B         103 kB
+├ ƒ /api/workspace-materials                     226 B         103 kB
+├ ƒ /api/workspace-members                       226 B         103 kB
+├ ƒ /api/workspaces                              226 B         103 kB
+├ ƒ /api/workspaces/[id]/select                  226 B         103 kB
+├ ƒ /assessments                                 181 B         106 kB
+├ ƒ /assessments/[id]                          2.24 kB         105 kB
+├ ƒ /assessments/new                           1.52 kB         104 kB
+├ ƒ /blueprints                                  181 B         106 kB
+├ ƒ /blueprints/[id]                           2.45 kB         105 kB
+├ ƒ /classes                                     181 B         106 kB
+├ ƒ /classes/[id]                              1.51 kB         104 kB
+├ ƒ /classes/new                                 952 B         104 kB
+├ ƒ /dashboard                                   226 B         103 kB
+├ ƒ /invite/[token]                              226 B         103 kB
+├ ○ /login                                     1.23 kB         110 kB
+├ ƒ /modules                                     181 B         106 kB
+├ ƒ /modules/[id]                                890 B         107 kB
+├ ƒ /modules/[id]/materials/[materialId]          3 kB         218 kB
+├ ƒ /modules/new                               1.65 kB         104 kB
+├ ○ /register                                  1.27 kB         107 kB
+├ ƒ /student                                     181 B         106 kB
+├ ƒ /student/assessments/[id]                  1.53 kB         104 kB
+├ ƒ /student/assessments/[id]/results           1.5 kB         108 kB
+├ ƒ /student/materials/[id]                    1.77 kB         217 kB
+├ ƒ /workspaces                                  181 B         106 kB
+└ ○ /workspaces/new                            1.44 kB         107 kB
++ First Load JS shared by all                   103 kB
+  ├ chunks/3866-43b84995b9758220.js            46.5 kB
+  ├ chunks/64c8468f-364c194a56a44ff7.js        54.2 kB
+  └ other shared chunks (total)                1.93 kB
+
+
+ƒ Middleware                                    144 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
