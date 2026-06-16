@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { useChat } from '@ai-sdk/react'
 
 interface TutorChatProps {
@@ -11,6 +12,11 @@ export function TutorChat({ materialId }: TutorChatProps) {
     api: '/api/ai/tutor',
     body: { materialId },
   })
+  const listRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
+  }, [messages])
 
   const busy = status === 'streaming' || status === 'submitted'
 
@@ -19,7 +25,7 @@ export function TutorChat({ materialId }: TutorChatProps) {
       <div className="px-3 py-2 border-b border-neutral-200 text-xs font-semibold uppercase tracking-wide text-neutral-500">
         Tutor AI
       </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[200px]">
+      <div ref={listRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[200px]">
         {messages.length === 0 && (
           <p className="text-sm text-neutral-400">Tanya apa saja tentang materi ini.</p>
         )}
@@ -33,7 +39,9 @@ export function TutorChat({ materialId }: TutorChatProps) {
         ))}
       </div>
       <form onSubmit={handleSubmit} className="p-2 border-t border-neutral-200 flex gap-2">
+        <label htmlFor="tutor-input" className="sr-only">Pesan</label>
         <input
+          id="tutor-input"
           value={input}
           onChange={handleInputChange}
           disabled={busy}
@@ -43,6 +51,7 @@ export function TutorChat({ materialId }: TutorChatProps) {
         <button
           type="submit"
           disabled={busy || !input.trim()}
+          aria-label="Kirim pesan"
           className="px-4 py-2 rounded-lg text-sm font-medium bg-neutral-900 hover:bg-neutral-700 text-white disabled:opacity-50"
         >
           Kirim

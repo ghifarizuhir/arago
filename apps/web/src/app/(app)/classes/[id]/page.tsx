@@ -143,7 +143,11 @@ export default function ClassDetailPage() {
       const res = await fetch(`/api/classes/${id}/assignments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assessmentId: pickAssessment, openAt, dueAt }),
+        body: JSON.stringify({
+          assessmentId: pickAssessment,
+          openAt: new Date(openAt).toISOString(),
+          dueAt: new Date(dueAt).toISOString(),
+        }),
       })
       if (res.ok) {
         setPickAssessment('')

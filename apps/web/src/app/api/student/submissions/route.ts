@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     .from(assessmentItems)
     .where(eq(assessmentItems.assessmentId, row.assessmentId))
 
-  const { score, totalItems } = gradeSubmission(items, answers)
+  const { score, totalItems, correctCount } = gradeSubmission(items, answers)
 
   try {
     const [submission] = await db
@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
         studentId: session.user.id,
         answers,
         score,
+        correctCount,
         totalItems,
         submittedAt: now,
         gradedAt: now,
