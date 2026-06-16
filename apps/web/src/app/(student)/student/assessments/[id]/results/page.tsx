@@ -9,7 +9,7 @@ type AssessmentItem = { id: string; question: string; options: Option[]; correct
 type Submission = { id: string; score: number; totalItems: number; answers: Record<string, string>; submittedAt: string }
 
 function ResultsPageInner() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams<{ id: string }>() // assignmentId
   const searchParams = useSearchParams()
   const router = useRouter()
   const submissionId = searchParams.get('submissionId')
@@ -24,22 +24,21 @@ function ResultsPageInner() {
       router.replace(`/student/assessments/${id}`)
       return
     }
-
-    Promise.all([
-      fetch(`/api/assessments/${id}`).then((r) => r.json()),
-      fetch(`/api/student/submissions/${submissionId}`).then((r) => r.json()),
-    ])
+    fetch(`/api/student/submissions/${submissionId}`)
+      .then((r) => r.json())
       .then(
-        ([
-          { assessment, items: its },
-          { submission: sub },
-        ]: [
-          { assessment: { title: string }; items: AssessmentItem[] },
-          { submission: Submission },
-        ]) => {
-          setAssessmentTitle(assessment?.title ?? '')
-          setItems(its ?? [])
+        ({
+          submission: sub,
+          assessmentTitle: title,
+          items: its,
+        }: {
+          submission: Submission
+          assessmentTitle: string
+          items: AssessmentItem[]
+        }) => {
           setSubmission(sub)
+          setAssessmentTitle(title ?? '')
+          setItems(its ?? [])
         },
       )
       .finally(() => setLoading(false))
@@ -57,71 +56,38 @@ function ResultsPageInner() {
     return <div className="text-center py-16 text-neutral-400 text-sm">Hasil tidak ditemukan.</div>
   }
 
-  const correctCount = items.filter((item) => submission.answers[item.id] === item.correctAnswer).length
-
   return (
     <div>
-      <div className="text-center mb-8">
-        <h1 className="text-xl font-bold text-neutral-900 mb-1">{assessmentTitle}</h1>
-        <p className="text-neutral-500 text-sm mb-4">Hasil Asesmen</p>
-        <div
-          className={[
-            'inline-flex flex-col items-center justify-center w-32 h-32 rounded-full border-4 mb-2',
-            submission.score >= 75 ? 'border-green-400 bg-green-50' : submission.score >= 50 ? 'border-yellow-400 bg-yellow-50' : 'border-red-400 bg-red-50',
-          ].join(' ')}
-        >
-          <span
-            className={[
-              'text-4xl font-bold',
-              submission.score >= 75 ? 'text-green-700' : submission.score >= 50 ? 'text-yellow-700' : 'text-red-700',
-            ].join(' ')}
-          >
-            {submission.score}
-          </span>
-          <span className="text-xs text-neutral-500">/ 100</span>
-        </div>
-        <p className="text-sm text-neutral-600">{correctCount} dari {submission.totalItems} jawaban benar</p>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-neutral-900">{assessmentTitle}</h1>
+        <p className="mt-1 text-sm text-neutral-500">
+          Nilai: <span className="font-semibold text-neutral-900">{submission.score}</span> / 100 ·{' '}
+          {submission.totalItems} soal
+        </p>
       </div>
 
-      <ol className="space-y-4 mb-8">
+      <ol className="space-y-6 mb-8">
         {items.map((item, idx) => {
-          const studentAnswer = submission.answers[item.id]
-          const isCorrect = studentAnswer === item.correctAnswer
+          const chosen = submission.answers[item.id]
           return (
-            <li
-              key={item.id}
-              className={['p-4 border rounded-lg', isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'].join(' ')}
-            >
-              <div className="flex items-start gap-2 mb-3">
-                <span
-                  className={[
-                    'inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold shrink-0 mt-0.5',
-                    isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white',
-                  ].join(' ')}
-                >
-                  {isCorrect ? '✓' : '✗'}
-                </span>
-                <p className="text-sm font-medium text-neutral-800">{idx + 1}. {item.question}</p>
-              </div>
-              <ul className="space-y-1 ml-7">
+            <li key={item.id} className="bg-white border border-neutral-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-neutral-800 mb-3">{idx + 1}. {item.question}</p>
+              <ul className="space-y-2">
                 {item.options.map((opt, oi) => {
-                  const isCorrectOpt = opt.id === item.correctAnswer
-                  const isStudentChoice = opt.id === studentAnswer
+                  const isCorrect = opt.id === item.correctAnswer
+                  const isChosen = opt.id === chosen
                   return (
                     <li
                       key={opt.id}
                       className={[
-                        'flex items-center gap-2 text-sm px-2 py-1 rounded',
-                        isCorrectOpt
-                          ? 'bg-green-200 text-green-900 font-medium'
-                          : isStudentChoice && !isCorrectOpt
-                          ? 'bg-red-200 text-red-900 line-through'
-                          : 'text-neutral-600',
+                        'flex items-center gap-3 p-2 rounded-lg text-sm',
+                        isCorrect ? 'bg-green-50 text-green-800' : isChosen ? 'bg-red-50 text-red-700' : 'text-neutral-700',
                       ].join(' ')}
                     >
-                      <span className="text-xs text-neutral-400 w-4">{String.fromCharCode(65 + oi)}.</span>
-                      {opt.text}
-                      {isCorrectOpt && <span className="ml-auto text-xs text-green-700">Jawaban benar</span>}
+                      <span className="text-xs font-medium text-neutral-400 w-4">{String.fromCharCode(65 + oi)}.</span>
+                      <span>{opt.text}</span>
+                      {isCorrect && <span className="ml-auto text-xs font-medium">Benar</span>}
+                      {isChosen && !isCorrect && <span className="ml-auto text-xs font-medium">Jawabanmu</span>}
                     </li>
                   )
                 })}
@@ -131,12 +97,7 @@ function ResultsPageInner() {
         })}
       </ol>
 
-      <Link
-        href="/student"
-        className="block text-center py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-medium rounded-lg transition-colors"
-      >
-        Kembali ke Dashboard
-      </Link>
+      <Link href="/student" className="text-sm text-blue-600 hover:underline">← Kembali ke dashboard</Link>
     </div>
   )
 }
