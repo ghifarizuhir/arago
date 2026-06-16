@@ -1,4 +1,2 @@
-export { generateAssessment, streamAssessmentItems, AssessmentItemSchema, AssessmentOutputSchema } from "./assessment-generator";
-export { getModel, setProvider, getProvider } from "./providers";
-export type { AIProvider } from "./providers";
-export { ASSESSMENT_GENERATION_PROMPT } from "./prompts";
+// Stub — real exports land in Slice 3 (AI package).
+export {}

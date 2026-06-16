@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "ui": "tui",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -17,28 +17,16 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
-    },
-    "test:e2e": {
-      "dependsOn": ["build"],
-      "outputs": []
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
     },
     "db:generate": {
-      "cache": false
-    },
-    "db:migrate": {
       "cache": false
     },
     "db:push": {
       "cache": false
     },
-    "db:seed": {
-      "cache": false
-    },
-    "db:reset": {
-      "cache": false
-    },
-    "clean": {
+    "db:migrate": {
       "cache": false
     }
   }

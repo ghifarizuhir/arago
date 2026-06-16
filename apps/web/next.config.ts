@@ -1,12 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  transpilePackages: ["@arago/db", "@arago/ai", "@arago/validators", "@arago/test-utils"],
   experimental: {
-    serverActions: {
-      bodySizeLimit: "2mb",
-    },
+    typedRoutes: true
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**"
+      }
+    ]
+  }
 };
 
 export default nextConfig;

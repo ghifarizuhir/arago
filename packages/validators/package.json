@@ -2,19 +2,12 @@
   "name": "@arago/validators",
   "version": "0.0.1",
   "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./auth": "./src/auth.ts",
-    "./assessment": "./src/assessment.ts",
-    "./user": "./src/user.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
     "test": "vitest run",
-    "clean": "rm -rf .turbo node_modules"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "zod": "^3.24.0"

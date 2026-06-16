@@ -1,29 +1,28 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
-import * as schema from "./schema";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const connectionString = process.env.DATABASE_URL!;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const client = postgres(connectionString, {
-  max: 1,
-  idle_timeout: 20,
-  connect_timeout: 10,
-  // Silence drizzle's internal "schema/relation already exists, skipping"
-  // bootstrap NOTICEs so migrate output stays clean and unambiguous.
-  onnotice: () => {},
-});
-
-const db = drizzle(client, { schema });
-
-async function main() {
-  console.log("Running migrations...");
-  await migrate(db, { migrationsFolder: "./drizzle" });
-  console.log("Migrations complete.");
-  await client.end();
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set");
 }
 
-main().catch((err) => {
+const migrationClient = postgres(process.env.DATABASE_URL, { max: 1 });
+
+async function runMigrations(): Promise<void> {
+  console.log("Running migrations...");
+  const db = drizzle(migrationClient);
+  await migrate(db, {
+    migrationsFolder: path.join(__dirname, "../drizzle")
+  });
+  console.log("Migrations complete.");
+  await migrationClient.end();
+}
+
+runMigrations().catch((err) => {
   console.error("Migration failed:", err);
   process.exit(1);
 });
