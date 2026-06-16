@@ -26,9 +26,13 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     .limit(1)
   if (!cls) return NextResponse.json({ error: 'Class not found' }, { status: 404 })
 
-  await db
+  const removed = await db
     .delete(classEnrollments)
     .where(and(eq(classEnrollments.classId, id), eq(classEnrollments.studentId, studentId)))
+    .returning()
+  if (removed.length === 0) {
+    return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
+  }
 
   return NextResponse.json({ success: true })
 }
