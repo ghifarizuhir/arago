@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: '/blueprints', label: 'Kisi-kisi' },
   { href: '/assessments', label: 'Asesmen' },
   { href: '/classes', label: 'Kelas' },
+  { href: '/analytics', label: 'Analitik' },
   { href: '/settings', label: 'Pengaturan' },
 ] as const;
 
