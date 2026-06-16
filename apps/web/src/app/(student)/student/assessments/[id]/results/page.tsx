@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 type Option = { id: string; text: string }
 type AssessmentItem = { id: string; question: string; options: Option[]; correctAnswer: string; sortOrder: number }
-type Submission = { id: string; score: number | null; totalItems: number; answers: Record<string, string>; submittedAt: string }
+type Submission = { id: string; score: number | null; correctCount: number | null; totalItems: number; answers: Record<string, string>; submittedAt: string }
 
 function ResultsPageInner() {
   const { id } = useParams<{ id: string }>() // assignmentId
@@ -62,8 +62,7 @@ function ResultsPageInner() {
       <div className="mb-6">
         <h1 className="text-xl font-bold text-neutral-900">{assessmentTitle}</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Nilai: <span className="font-semibold text-neutral-900">{submission.score ?? '—'}</span> / 100 ·{' '}
-          {submission.totalItems} soal
+          Nilai: <span className="font-semibold text-neutral-900">{submission.score ?? '—'}</span> / 100 · {submission.correctCount ?? '—'} dari {submission.totalItems} benar
         </p>
       </div>
 
