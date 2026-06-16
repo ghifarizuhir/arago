@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
-import { users, workspaces } from '@arago/db/schema'
-import { eq } from 'drizzle-orm'
+import { users, workspaces, workspaceMembers } from '@arago/db/schema'
+import { and, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { z } from 'zod'
@@ -38,7 +38,12 @@ export async function GET() {
   const workspaceId = await getCurrentWorkspaceId()
   let workspace: { id: string; name: string } | null = null
   if (workspaceId && z.string().uuid().safeParse(workspaceId).success) {
-    const [w] = await db.select({ id: workspaces.id, name: workspaces.name }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1)
+    const [w] = await db
+      .select({ id: workspaces.id, name: workspaces.name })
+      .from(workspaces)
+      .innerJoin(workspaceMembers, eq(workspaceMembers.workspaceId, workspaces.id))
+      .where(and(eq(workspaces.id, workspaceId), eq(workspaceMembers.userId, session.user.id)))
+      .limit(1)
     workspace = w ?? null
   }
   return NextResponse.json({ user: me ?? null, workspace })
