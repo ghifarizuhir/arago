@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
-import { classes, classAssignments, assessments } from '@arago/db/schema'
+import { classes, classAssignments, assessments, classEnrollments, notifications } from '@arago/db/schema'
 import { eq, isNull, and, desc } from 'drizzle-orm'
 import { requireWorkspaceTeacher } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
@@ -96,6 +96,28 @@ export async function POST(req: NextRequest, { params }: Params) {
       dueAt: parsed.data.dueAt,
     })
     .returning()
+
+  // Best-effort: notify enrolled students. Must not fail assignment creation.
+  if (created) {
+    try {
+      const [[a], enrolled] = await Promise.all([
+        db.select({ title: assessments.title }).from(assessments).where(eq(assessments.id, created.assessmentId)).limit(1),
+        db.select({ studentId: classEnrollments.studentId }).from(classEnrollments).where(eq(classEnrollments.classId, id)),
+      ])
+      if (enrolled.length > 0) {
+        await db.insert(notifications).values(
+          enrolled.map((e) => ({
+            userId: e.studentId,
+            type: 'assignment',
+            message: `Asesmen baru: ${a?.title ?? 'Asesmen'}`,
+            linkPath: `/student/assessments/${created.id}`,
+          })),
+        )
+      }
+    } catch {
+      // swallow — notification failure must not break assignment creation
+    }
+  }
 
   return NextResponse.json({ assignment: created }, { status: 201 })
 }
