@@ -363,12 +363,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "correct_count": {
-          "name": "correct_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "total_items": {
           "name": "total_items",
           "type": "integer",
