@@ -12,9 +12,11 @@ export function setProvider(p: Provider): void {
 
 export function getModel(): LanguageModelV1 {
   if (_provider === 'openai') {
-    const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY ?? '' });
+    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not set');
+    const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
     return openai('gpt-4o') as LanguageModelV1;
   }
-  const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? '' });
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not set');
+  const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   return anthropic('claude-sonnet-4-5') as LanguageModelV1;
 }
