@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { useChat } from '@ai-sdk/react'
 
 const CHIPS = [
@@ -26,6 +27,11 @@ export function MaterialChat({ materialId, onApply }: MaterialChatProps) {
     api: '/api/ai/chat',
     body: { materialId },
   })
+  const listRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
+  }, [messages])
 
   const busy = status === 'streaming' || status === 'submitted'
 
@@ -39,7 +45,7 @@ export function MaterialChat({ materialId, onApply }: MaterialChatProps) {
         Asisten AI
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[200px]">
+      <div ref={listRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[200px]">
         {messages.length === 0 && (
           <p className="text-sm text-neutral-400">
             Minta bantuan menyempurnakan bahan ajar ini.
@@ -75,6 +81,7 @@ export function MaterialChat({ materialId, onApply }: MaterialChatProps) {
               type="button"
               disabled={busy}
               onClick={() => append({ role: 'user', content: c })}
+              aria-label={`Saran: ${c}`}
               className="px-2 py-1 rounded-full text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-600 disabled:opacity-50"
             >
               {c}
@@ -82,7 +89,9 @@ export function MaterialChat({ materialId, onApply }: MaterialChatProps) {
           ))}
         </div>
         <form onSubmit={handleSubmit} className="flex gap-2">
+          <label htmlFor="chat-input" className="sr-only">Pesan</label>
           <input
+            id="chat-input"
             value={input}
             onChange={handleInputChange}
             disabled={busy}
@@ -92,6 +101,7 @@ export function MaterialChat({ materialId, onApply }: MaterialChatProps) {
           <button
             type="submit"
             disabled={busy || !input.trim()}
+            aria-label="Kirim pesan"
             className="px-4 py-2 rounded-lg text-sm font-medium bg-neutral-900 hover:bg-neutral-700 text-white disabled:opacity-50"
           >
             Kirim

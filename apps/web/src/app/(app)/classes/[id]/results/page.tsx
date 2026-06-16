@@ -15,22 +15,30 @@ export default function ClassResultsPage() {
   const [students, setStudents] = useState<Student[]>([])
   const [subs, setSubs] = useState<Sub[]>([])
   const [loading, setLoading] = useState(true)
+  const [errKind, setErrKind] = useState<'none' | 'forbidden' | 'notfound'>('none')
 
   useEffect(() => {
     fetch(`/api/classes/${id}/results`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((r) => {
+        if (r.ok) return r.json()
+        setErrKind(r.status === 403 ? 'forbidden' : 'notfound')
+        return Promise.reject(r)
+      })
       .then((data) => {
         setCls(data.class)
         setAssignments(data.assignments ?? [])
         setStudents(data.students ?? [])
         setSubs(data.submissions ?? [])
       })
-      .catch(() => setCls(null))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [id])
 
   if (loading) {
     return <div className="flex items-center justify-center h-64 text-neutral-400 text-sm">Memuat hasil...</div>
+  }
+  if (errKind === 'forbidden') {
+    return <div className="flex items-center justify-center h-64 text-red-500 text-sm">Anda tidak punya akses ke hasil kelas ini.</div>
   }
   if (!cls) {
     return <div className="flex items-center justify-center h-64 text-red-500 text-sm">Kelas tidak ditemukan.</div>
