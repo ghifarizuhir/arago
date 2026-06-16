@@ -2,6 +2,10 @@ import NextAuth from 'next-auth';
 import { NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth/config';
 
+// NOTE: residual Edge build warnings about CompressionStream/DecompressionStream
+// originate from next-auth@5-beta -> jose (JWT encryption), upstream noise — not
+// the postgres-in-Edge issue, which the auth config split (lib/auth/config.ts) resolved.
+
 const { auth } = NextAuth(authConfig);
 
 const PUBLIC_PATHS = ['/login', '/register', '/invite', '/api/auth'];

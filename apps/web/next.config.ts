@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
   // typedRoutes enabled in Phase 4: genuinely-dynamic nav targets (login callbackUrl,
   // result redirects) are cast with `as Route` from 'next'. Static hrefs are left as-is.
   typedRoutes: true,
-  experimental: {},
   images: {
     remotePatterns: [
       {

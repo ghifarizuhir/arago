@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { type Route } from 'next'
 
 type Option = { id: string; text: string }
 type AssessmentItem = { id: string; question: string; options: Option[]; sortOrder: number }
@@ -47,7 +48,7 @@ export default function TakeAssessmentPage() {
       })
       if (res.status === 409) {
         const data = await res.json()
-        router.push(`/student/assessments/${id}/results?submissionId=${data.submissionId}`)
+        router.push(`/student/assessments/${id}/results?submissionId=${data.submissionId}` as Route)
         return
       }
       if (!res.ok) {
@@ -56,7 +57,7 @@ export default function TakeAssessmentPage() {
         return
       }
       const { submissionId } = await res.json()
-      router.push(`/student/assessments/${id}/results?submissionId=${submissionId}`)
+      router.push(`/student/assessments/${id}/results?submissionId=${submissionId}` as Route)
     } catch {
       setError('Terjadi kesalahan. Coba lagi.')
     } finally {
