@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 
 type Enrolled = { studentId: string; name: string; email: string }
 type AssignedMaterial = { materialId: string; title: string }
@@ -184,6 +185,9 @@ export default function ClassDetailPage() {
             className="flex-1 text-xl font-bold text-neutral-900 bg-transparent border-b border-transparent hover:border-neutral-200 focus:border-neutral-400 focus:outline-none pb-1"
           />
         </div>
+        <Link href={`/classes/${id}/results`} className="text-sm text-blue-600 hover:underline">
+          Lihat hasil →
+        </Link>
       </section>
 
       <section>
