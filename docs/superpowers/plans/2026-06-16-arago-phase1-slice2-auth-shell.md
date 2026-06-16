@@ -1044,8 +1044,8 @@ git commit -m "feat(web): app shell — root layout, workspace context, sidebar,
 - Create: `apps/web/src/app/api/workspaces/route.ts`
 - Create: `apps/web/src/app/api/workspaces/[id]/select/route.ts`
 - Create: `apps/web/src/app/(app)/layout.tsx`
-- Create: `apps/web/src/app/(app)/workspaces/page.tsx`
-- Create: `apps/web/src/app/(app)/workspaces/new/page.tsx`
+- Create: `apps/web/src/app/(workspace-select)/workspaces/page.tsx`
+- Create: `apps/web/src/app/(workspace-select)/workspaces/new/page.tsx`
 - Create: `apps/web/src/app/invite/[token]/page.tsx`
 - Test: `apps/web/src/lib/workspace.test.ts`
 
@@ -1220,6 +1220,7 @@ import { db } from '@arago/db/client';
 import { workspaces } from '@arago/db/schema';
 import { eq } from 'drizzle-orm';
 import { getCurrentWorkspaceId } from '@/lib/workspace-context';
+import { getWorkspaceMember } from '@/lib/workspace';
 import { Sidebar } from '@/components/sidebar';
 
 export default async function AppLayout({
@@ -1232,6 +1233,10 @@ export default async function AppLayout({
 
   const workspaceId = await getCurrentWorkspaceId();
   if (!workspaceId) redirect('/workspaces');
+
+  // Authz: confirm the user is a MEMBER of the cookie's workspace, not just that it exists.
+  const member = await getWorkspaceMember(workspaceId, session.user.id);
+  if (!member) redirect('/workspaces');
 
   const [workspace] = await db
     .select()
@@ -1249,11 +1254,11 @@ export default async function AppLayout({
   );
 }
 ```
-> NOTE: `/workspaces` and `/workspaces/new` live INSIDE the `(app)` group but must render WITHOUT requiring a workspace cookie. Because this layout redirects to `/workspaces` when no cookie is set, that is a self-redirect that resolves once: the workspaces pages call `auth()` themselves and do their own rendering. To avoid a redirect loop, the workspaces pages set the cookie via server action before navigating to `/dashboard`. The layout's `redirect('/workspaces')` short-circuits to the same path and Next renders the page (no infinite loop because `/workspaces` matches and the redirect target equals current path → served).
+> IMPORTANT — route groups: `/workspaces` and `/workspaces/new` must NOT live inside the `(app)` group. This layout redirects to `/workspaces` whenever there is no workspace cookie; if the workspaces pages were under `(app)`, that redirect would re-enter this same layout and Next.js would throw `ERR_TOO_MANY_REDIRECTS` (Next does NOT short-circuit self-redirects). Put the workspace-selection pages in a SEPARATE route group — `apps/web/src/app/(workspace-select)/workspaces/page.tsx` and `(workspace-select)/workspaces/new/page.tsx` — which inherits only the root layout (no workspace gate). The selection page sets the cookie via server action, then navigates to `/dashboard`. (URLs stay `/workspaces` and `/workspaces/new`; route-group names in parens don't appear in the URL.)
 
-Expected: Unauthenticated → `/login`. No workspace cookie → `/workspaces`. Otherwise renders sidebar + content.
+Expected: Unauthenticated → `/login`. No workspace cookie, or user not a member of the cookie's workspace → `/workspaces`. Otherwise renders sidebar + content.
 
-- [ ] **Step 3.4: Workspaces list page** — `apps/web/src/app/(app)/workspaces/page.tsx`
+- [ ] **Step 3.4: Workspaces list page** — `apps/web/src/app/(workspace-select)/workspaces/page.tsx`
 ```tsx
 import { auth } from '@/lib/auth';
 import { getUserWorkspaces } from '@/lib/workspace';
@@ -1331,7 +1336,7 @@ export default async function WorkspacesPage() {
 ```
 Expected: Lists the user's workspaces. Selecting sets the cookie via Server Action and redirects to `/dashboard`. Empty state CTA.
 
-- [ ] **Step 3.5: Create workspace page** — `apps/web/src/app/(app)/workspaces/new/page.tsx`
+- [ ] **Step 3.5: Create workspace page** — `apps/web/src/app/(workspace-select)/workspaces/new/page.tsx`
 ```tsx
 'use client';
 
@@ -1685,7 +1690,7 @@ git add apps/web/src/lib/workspace.ts \
         apps/web/src/lib/workspace.test.ts \
         apps/web/src/app/api/workspaces/ \
         "apps/web/src/app/(app)/layout.tsx" \
-        "apps/web/src/app/(app)/workspaces/" \
+        "apps/web/src/app/(workspace-select)/workspaces/" \
         apps/web/src/app/invite/
 git commit -m "feat(workspace): CRUD, invite flow, selection cookie, (app) layout gate (KAR-5)"
 ```
