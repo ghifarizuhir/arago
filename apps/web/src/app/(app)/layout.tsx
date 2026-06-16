@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { getCurrentWorkspaceId } from '@/lib/workspace-context';
 import { getWorkspaceMember } from '@/lib/workspace';
 import { Sidebar } from '@/components/sidebar';
+import { NotificationBell } from '@/components/notification-bell';
 
 export default async function AppLayout({
   children,
@@ -32,7 +33,12 @@ export default async function AppLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       <Sidebar workspaceName={workspace.name} />
-      <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <main className="flex-1 overflow-y-auto">
+        <div className="flex justify-end border-b border-gray-200 bg-white px-6 py-2">
+          <NotificationBell />
+        </div>
+        <div className="p-6">{children}</div>
+      </main>
     </div>
   );
 }
