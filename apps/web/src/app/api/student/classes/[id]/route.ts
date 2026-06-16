@@ -10,7 +10,7 @@ import {
   assessments,
   submissions,
 } from '@arago/db/schema'
-import { eq, isNull, and } from 'drizzle-orm'
+import { eq, isNull, and, inArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
 import { z } from 'zod'
 
@@ -69,10 +69,19 @@ export async function GET(_req: NextRequest, { params }: Params) {
       ),
     )
 
-  const mySubs = await db
-    .select({ assignmentId: submissions.assignmentId })
-    .from(submissions)
-    .where(eq(submissions.studentId, session.user.id))
+  const assignmentIds = assignmentRows.map((a) => a.id)
+  const mySubs =
+    assignmentIds.length === 0
+      ? []
+      : await db
+          .select({ assignmentId: submissions.assignmentId })
+          .from(submissions)
+          .where(
+            and(
+              eq(submissions.studentId, session.user.id),
+              inArray(submissions.assignmentId, assignmentIds),
+            ),
+          )
   const submitted = new Set(mySubs.map((s) => s.assignmentId))
 
   const now = Date.now()

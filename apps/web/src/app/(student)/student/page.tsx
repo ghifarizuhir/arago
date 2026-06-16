@@ -25,10 +25,19 @@ export default async function StudentDashboardPage() {
   const classIds = enrolledClasses.map((c) => c.id)
 
   // Submissions already made by this student (to exclude from active list).
-  const mySubs = await db
-    .select({ assignmentId: submissions.assignmentId })
-    .from(submissions)
-    .where(eq(submissions.studentId, session.user.id))
+  const mySubs =
+    classIds.length === 0
+      ? []
+      : await db
+          .select({ assignmentId: submissions.assignmentId })
+          .from(submissions)
+          .innerJoin(classAssignments, eq(submissions.assignmentId, classAssignments.id))
+          .where(
+            and(
+              eq(submissions.studentId, session.user.id),
+              inArray(classAssignments.classId, classIds),
+            ),
+          )
   const submittedIds = mySubs.map((s) => s.assignmentId)
 
   const now = new Date()

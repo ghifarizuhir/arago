@@ -38,7 +38,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .select({ id: classAssignments.id, assessmentTitle: assessments.title })
     .from(classAssignments)
     .innerJoin(assessments, eq(classAssignments.assessmentId, assessments.id))
-    .where(and(eq(classAssignments.classId, id), isNull(classAssignments.deletedAt)))
+    .where(and(eq(classAssignments.classId, id), isNull(classAssignments.deletedAt), isNull(assessments.deletedAt)))
 
   const students = await db
     .select({ studentId: classEnrollments.studentId, name: users.name, email: users.email })
