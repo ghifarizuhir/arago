@@ -149,3 +149,15 @@ export const AssignMaterialsSchema = z.object({
   materialIds: z.array(uuidSchema).min(1, "Select at least one material")
 });
 export type AssignMaterialsInput = z.infer<typeof AssignMaterialsSchema>;
+
+export const CreateAssignmentSchema = z
+  .object({
+    assessmentId: uuidSchema,
+    openAt: z.coerce.date(),
+    dueAt: z.coerce.date()
+  })
+  .refine((v) => v.dueAt > v.openAt, {
+    message: "dueAt must be after openAt",
+    path: ["dueAt"]
+  });
+export type CreateAssignmentInput = z.infer<typeof CreateAssignmentSchema>;
