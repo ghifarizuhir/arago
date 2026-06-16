@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
 import { classes, classAssignments, assessments } from '@arago/db/schema'
 import { eq, isNull, and, desc } from 'drizzle-orm'
-import { requireAuth } from '@/lib/auth/guards'
+import { requireWorkspaceTeacher } from '@/lib/auth/guards'
 import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { CreateAssignmentSchema } from '@arago/validators'
 import { z } from 'zod'
@@ -10,9 +10,6 @@ import { z } from 'zod'
 type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { error } = await requireAuth()
-  if (error) return error
-
   const { id } = await params
   if (!z.string().uuid().safeParse(id).success) {
     return NextResponse.json({ error: 'Class not found' }, { status: 404 })
@@ -20,6 +17,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const workspaceId = await getCurrentWorkspaceId()
   if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
+
+  const { error } = await requireWorkspaceTeacher(workspaceId)
+  if (error) return error
 
   const [cls] = await db
     .select({ id: classes.id })
@@ -45,9 +45,6 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const { error, session } = await requireAuth()
-  if (error || !session) return error!
-
   const { id } = await params
   if (!z.string().uuid().safeParse(id).success) {
     return NextResponse.json({ error: 'Class not found' }, { status: 404 })
@@ -55,6 +52,9 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const workspaceId = await getCurrentWorkspaceId()
   if (!workspaceId) return NextResponse.json({ error: 'No active workspace' }, { status: 400 })
+
+  const { error } = await requireWorkspaceTeacher(workspaceId)
+  if (error) return error
 
   const body = await req.json().catch(() => null)
   const parsed = CreateAssignmentSchema.safeParse(body)
