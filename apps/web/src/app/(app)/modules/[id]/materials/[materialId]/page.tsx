@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { RichTextEditor } from '@/components/editor/rich-text-editor'
+import { MaterialChat } from '@/components/material-chat'
 
 type Material = {
   id: string
@@ -70,6 +71,14 @@ export default function MaterialEditorPage() {
     [save],
   )
 
+  const handleApplyRevision = useCallback(
+    (html: string) => {
+      setContent(html)
+      save({ content: html })
+    },
+    [save],
+  )
+
   const handleTitleBlur = () => {
     if (material && title !== material.title) {
       save({ title })
@@ -130,8 +139,11 @@ export default function MaterialEditorPage() {
           <RichTextEditor content={content} onChange={handleContentChange} editable={true} />
         </div>
 
-        <div className="w-56 shrink-0">
+        <div className="w-80 shrink-0">
           <div className="sticky top-8 space-y-4">
+            <div className="h-[420px]">
+              <MaterialChat materialId={material.id} onApply={handleApplyRevision} />
+            </div>
             <div className="text-sm text-neutral-400 h-5">
               {saveStatus === 'saving' && 'Menyimpan...'}
               {saveStatus === 'saved' && <span className="text-green-600">Tersimpan</span>}
