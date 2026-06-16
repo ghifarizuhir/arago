@@ -5,6 +5,7 @@ import { generateMaterial } from '../src/generate-material.js';
 import { generateBlueprint } from '../src/generate-blueprint.js';
 import { generateAssessment } from '../src/generate-assessment.js';
 import { buildMaterialChatSystemPrompt } from '../src/chat.js';
+import { curriculumTemplate } from '../src/templates/curriculum.js';
 import * as providers from '../src/providers/index.js';
 
 function makeMockModel(responseObject: unknown): MockLanguageModelV1 {
@@ -95,6 +96,31 @@ describe('@arago/ai', () => {
     });
   });
 
+  describe('generateBlueprint curriculum injection', () => {
+    it('includes the k13 template markers in the model prompt', async () => {
+      let capturedPrompt = '';
+      const model = new MockLanguageModelV1({
+        defaultObjectGenerationMode: 'json',
+        doGenerate: async (opts) => {
+          capturedPrompt = JSON.stringify(opts.prompt);
+          return {
+            rawCall: { rawPrompt: null, rawSettings: {} },
+            finishReason: 'stop',
+            usage: { promptTokens: 1, completionTokens: 1 },
+            text: JSON.stringify({
+              title: 'Kisi-kisi',
+              indicators: [{ id: 'IND-001', description: 'd', bloomLevel: 'C1', competency: 'KD 3.1' }],
+            }),
+          };
+        },
+      });
+      vi.spyOn(providers, 'getModel').mockReturnValue(model as any);
+
+      await generateBlueprint('Judul', '<p>isi</p>', 'k13');
+      expect(capturedPrompt).toContain('Kompetensi Dasar');
+    });
+  });
+
   describe('generateAssessment', () => {
     it('returns assessment items with 4 options each', async () => {
       const mockResponse = {
@@ -156,6 +182,24 @@ describe('@arago/ai', () => {
 
     it('handles empty material content without throwing', () => {
       expect(() => buildMaterialChatSystemPrompt('')).not.toThrow();
+    });
+  });
+
+  describe('curriculumTemplate', () => {
+    it('merdeka mentions Capaian Pembelajaran and Fase', () => {
+      const t = curriculumTemplate('merdeka');
+      expect(t).toContain('Capaian Pembelajaran');
+      expect(t).toContain('Fase');
+    });
+
+    it('k13 mentions Kompetensi Inti and Kompetensi Dasar', () => {
+      const t = curriculumTemplate('k13');
+      expect(t).toContain('Kompetensi Inti');
+      expect(t).toContain('Kompetensi Dasar');
+    });
+
+    it('custom returns an empty guidance string', () => {
+      expect(curriculumTemplate('custom')).toBe('');
     });
   });
 });
