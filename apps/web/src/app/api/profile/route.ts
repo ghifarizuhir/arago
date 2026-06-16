@@ -1,8 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
-import { users } from '@arago/db/schema'
+import { users, workspaces } from '@arago/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
+import { getCurrentWorkspaceId } from '@/lib/workspace-context'
 import { z } from 'zod'
 
 const patchSchema = z.object({ name: z.string().min(1).max(255) })
@@ -29,3 +30,17 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ user: updated })
 }
+
+export async function GET() {
+  const { error, session } = await requireAuth()
+  if (error || !session) return error!
+  const [me] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.id, session.user.id)).limit(1)
+  const workspaceId = await getCurrentWorkspaceId()
+  let workspace: { id: string; name: string } | null = null
+  if (workspaceId) {
+    const [w] = await db.select({ id: workspaces.id, name: workspaces.name }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1)
+    workspace = w ?? null
+  }
+  return NextResponse.json({ user: me ?? null, workspace })
+}
+
