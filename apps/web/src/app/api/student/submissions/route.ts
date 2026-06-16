@@ -99,22 +99,29 @@ export async function POST(req: NextRequest) {
 
   const { score, totalItems } = gradeSubmission(items, answers)
 
-  const [submission] = await db
-    .insert(submissions)
-    .values({
-      assignmentId,
-      studentId: session.user.id,
-      answers,
-      score,
-      totalItems,
-      submittedAt: now,
-      gradedAt: now,
-    })
-    .returning()
+  try {
+    const [submission] = await db
+      .insert(submissions)
+      .values({
+        assignmentId,
+        studentId: session.user.id,
+        answers,
+        score,
+        totalItems,
+        submittedAt: now,
+        gradedAt: now,
+      })
+      .returning()
 
-  if (!submission) {
-    return NextResponse.json({ error: 'Failed to create submission' }, { status: 500 })
+    if (!submission) {
+      return NextResponse.json({ error: 'Failed to create submission' }, { status: 500 })
+    }
+
+    return NextResponse.json({ submissionId: submission.id, score, totalItems }, { status: 201 })
+  } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err && (err as { code?: string }).code === '23505') {
+      return NextResponse.json({ error: 'Already submitted' }, { status: 409 })
+    }
+    throw err
   }
-
-  return NextResponse.json({ submissionId: submission.id, score, totalItems }, { status: 201 })
 }

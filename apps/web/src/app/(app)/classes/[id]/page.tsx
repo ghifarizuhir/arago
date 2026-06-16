@@ -137,16 +137,23 @@ export default function ClassDetailPage() {
 
   async function createAssignment() {
     if (!pickAssessment || !openAt || !dueAt) return
-    const res = await fetch(`/api/classes/${id}/assignments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assessmentId: pickAssessment, openAt, dueAt }),
-    })
-    if (res.ok) {
-      setPickAssessment('')
-      setOpenAt('')
-      setDueAt('')
-      await load()
+    try {
+      setBusy(true)
+      const res = await fetch(`/api/classes/${id}/assignments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId: pickAssessment, openAt, dueAt }),
+      })
+      if (res.ok) {
+        setPickAssessment('')
+        setOpenAt('')
+        setDueAt('')
+        await load()
+      } else {
+        alert('Gagal menugaskan asesmen. Pastikan tenggat setelah waktu buka.')
+      }
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -267,7 +274,7 @@ export default function ClassDetailPage() {
           </div>
           <button
             onClick={createAssignment}
-            disabled={!pickAssessment || !openAt || !dueAt}
+            disabled={!pickAssessment || !openAt || !dueAt || busy}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
           >
             Tugaskan
