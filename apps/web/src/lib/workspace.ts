@@ -27,12 +27,12 @@ export async function createWorkspace(
     .returning();
 
   await db.insert(workspaceMembers).values({
-    workspaceId: workspace.id,
+    workspaceId: workspace!.id,
     userId,
     role: 'owner',
   });
 
-  return workspace;
+  return workspace!;
 }
 
 export async function getUserWorkspaces(
