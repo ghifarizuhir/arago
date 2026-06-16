@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import type { LanguageModelV1 } from 'ai';
 import { MockLanguageModelV1, simulateReadableStream } from 'ai/test';
 import { extractModuleContent } from '../src/extract.js';
 import { generateMaterial } from '../src/generate-material.js';
@@ -218,40 +219,44 @@ describe('@arago/ai', () => {
       expect(p).toContain('soal');
     });
   });
-});
 
-function makeStreamModel(text: string): MockLanguageModelV1 {
-  return new MockLanguageModelV1({
-    doStream: async () => ({
-      stream: simulateReadableStream({
-        chunks: [
-          { type: 'text-delta', textDelta: text },
-          { type: 'finish', finishReason: 'stop', usage: { promptTokens: 1, completionTokens: 1 } },
-        ],
+  function makeStreamModel(text: string): MockLanguageModelV1 {
+    return new MockLanguageModelV1({
+      doStream: async () => ({
+        stream: simulateReadableStream({
+          chunks: [
+            { type: 'text-delta', textDelta: text },
+            { type: 'finish', finishReason: 'stop', usage: { promptTokens: 1, completionTokens: 1 } },
+          ],
+        }),
+        rawCall: { rawPrompt: null, rawSettings: {} },
       }),
-      rawCall: { rawPrompt: null, rawSettings: {} },
-    }),
-  });
-}
+    });
+  }
 
-describe('streamMaterialChat', () => {
-  it('uses getModel and streams text through', async () => {
-    const spy = vi.spyOn(providers, 'getModel').mockReturnValue(makeStreamModel('halo') as any);
-    const result = streamMaterialChat({ materialContent: '<p>x</p>', messages: [{ role: 'user', content: 'hai' }] });
-    expect(spy).toHaveBeenCalled();
-    let out = '';
-    for await (const chunk of result.textStream) out += chunk;
-    expect(out).toBe('halo');
-  });
-});
+  describe('streamMaterialChat', () => {
+    afterEach(() => vi.restoreAllMocks());
 
-describe('streamTutor', () => {
-  it('uses getModel and streams text through', async () => {
-    const spy = vi.spyOn(providers, 'getModel').mockReturnValue(makeStreamModel('jawaban') as any);
-    const result = streamTutor({ materialContent: '<p>x</p>', messages: [{ role: 'user', content: 'tanya' }] });
-    expect(spy).toHaveBeenCalled();
-    let out = '';
-    for await (const chunk of result.textStream) out += chunk;
-    expect(out).toBe('jawaban');
+    it('uses getModel and streams text through', async () => {
+      const spy = vi.spyOn(providers, 'getModel').mockReturnValue(makeStreamModel('halo') as unknown as LanguageModelV1);
+      const result = streamMaterialChat({ materialContent: '<p>x</p>', messages: [{ role: 'user', content: 'hai' }] });
+      expect(spy).toHaveBeenCalled();
+      let out = '';
+      for await (const chunk of result.textStream) out += chunk;
+      expect(out).toBe('halo');
+    });
+  });
+
+  describe('streamTutor', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('uses getModel and streams text through', async () => {
+      const spy = vi.spyOn(providers, 'getModel').mockReturnValue(makeStreamModel('jawaban') as unknown as LanguageModelV1);
+      const result = streamTutor({ materialContent: '<p>x</p>', messages: [{ role: 'user', content: 'tanya' }] });
+      expect(spy).toHaveBeenCalled();
+      let out = '';
+      for await (const chunk of result.textStream) out += chunk;
+      expect(out).toBe('jawaban');
+    });
   });
 });
