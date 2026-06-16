@@ -10,7 +10,10 @@ import {
   CreateModuleSchema,
   CreateMaterialSchema,
   CreateBlueprintSchema,
-  CreateAssessmentSchema
+  CreateAssessmentSchema,
+  CreateClassSchema,
+  EnrollStudentsSchema,
+  AssignMaterialsSchema
 } from "./index.js";
 
 describe("WorkspaceMemberRole", () => {
@@ -252,5 +255,43 @@ describe("CreateAssessmentSchema", () => {
       blueprintIds: ["not-a-uuid"]
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("CreateClassSchema", () => {
+  it("accepts a valid name", () => {
+    expect(CreateClassSchema.safeParse({ name: "Kelas 7A" }).success).toBe(true);
+  });
+  it("rejects an empty name", () => {
+    expect(CreateClassSchema.safeParse({ name: "" }).success).toBe(false);
+  });
+});
+
+describe("EnrollStudentsSchema", () => {
+  it("accepts an array of uuids", () => {
+    expect(
+      EnrollStudentsSchema.safeParse({
+        studentIds: ["11111111-1111-1111-1111-111111111111"],
+      }).success,
+    ).toBe(true);
+  });
+  it("rejects an empty array", () => {
+    expect(EnrollStudentsSchema.safeParse({ studentIds: [] }).success).toBe(false);
+  });
+  it("rejects non-uuid entries", () => {
+    expect(EnrollStudentsSchema.safeParse({ studentIds: ["nope"] }).success).toBe(false);
+  });
+});
+
+describe("AssignMaterialsSchema", () => {
+  it("accepts an array of uuids", () => {
+    expect(
+      AssignMaterialsSchema.safeParse({
+        materialIds: ["22222222-2222-2222-2222-222222222222"],
+      }).success,
+    ).toBe(true);
+  });
+  it("rejects an empty array", () => {
+    expect(AssignMaterialsSchema.safeParse({ materialIds: [] }).success).toBe(false);
   });
 });

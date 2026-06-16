@@ -129,3 +129,23 @@ export const CreateAssessmentSchema = z.object({
     .min(1, "At least one blueprint is required")
 });
 export type CreateAssessmentInput = z.infer<typeof CreateAssessmentSchema>;
+
+// ─── Class (Kelas) schemas ────────────────────────────────────────────────────
+
+export const CreateClassSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Class name is required")
+    .max(255, "Class name must be 255 characters or fewer")
+});
+export type CreateClassInput = z.infer<typeof CreateClassSchema>;
+
+export const EnrollStudentsSchema = z.object({
+  studentIds: z.array(uuidSchema).min(1, "Select at least one student")
+});
+export type EnrollStudentsInput = z.infer<typeof EnrollStudentsSchema>;
+
+export const AssignMaterialsSchema = z.object({
+  materialIds: z.array(uuidSchema).min(1, "Select at least one material")
+});
+export type AssignMaterialsInput = z.infer<typeof AssignMaterialsSchema>;
