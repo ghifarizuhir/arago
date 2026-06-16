@@ -5,6 +5,7 @@ import { generateMaterial } from '../src/generate-material.js';
 import { generateBlueprint } from '../src/generate-blueprint.js';
 import { generateAssessment } from '../src/generate-assessment.js';
 import { buildMaterialChatSystemPrompt } from '../src/chat.js';
+import { buildTutorSystemPrompt } from '../src/tutor.js';
 import { curriculumTemplate } from '../src/templates/curriculum.js';
 import * as providers from '../src/providers/index.js';
 
@@ -200,6 +201,21 @@ describe('@arago/ai', () => {
 
     it('custom returns an empty guidance string', () => {
       expect(curriculumTemplate('custom')).toBe('');
+    });
+  });
+
+  describe('buildTutorSystemPrompt', () => {
+    it('embeds the material content', () => {
+      const p = buildTutorSystemPrompt('<p>Fotosintesis terjadi di kloroplas.</p>');
+      expect(p).toContain('Fotosintesis terjadi di kloroplas.');
+    });
+
+    it('instructs to answer only from the material and refuse outside it', () => {
+      const p = buildTutorSystemPrompt('<p>x</p>').toLowerCase();
+      expect(p).toContain('hanya');
+      expect(p).toContain('materi');
+      // must guard against leaking assessment answers
+      expect(p).toContain('soal');
     });
   });
 });
