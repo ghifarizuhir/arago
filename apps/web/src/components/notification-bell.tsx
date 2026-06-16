@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { type Route } from 'next'
 
@@ -8,11 +8,12 @@ type Notif = { id: string; type: string; message: string; linkPath: string | nul
 
 export function NotificationBell() {
   const router = useRouter()
+  const containerRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Notif[]>([])
   const [unread, setUnread] = useState(0)
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const res = await fetch('/api/notifications')
       if (!res.ok) return
@@ -22,14 +23,25 @@ export function NotificationBell() {
     } catch {
       // ignore
     }
-  }
+  }, [])
 
   useEffect(() => {
     load()
-  }, [])
+    const id = setInterval(load, 60_000)
+    return () => clearInterval(id)
+  }, [load])
+
+  useEffect(() => {
+    if (!open) return
+    function handleOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [open])
 
   async function markAll() {
-    await fetch('/api/notifications/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    await fetch('/api/notifications/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
     await load()
   }
 
@@ -45,7 +57,7 @@ export function NotificationBell() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

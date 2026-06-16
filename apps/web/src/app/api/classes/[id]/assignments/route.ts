@@ -100,15 +100,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   // Best-effort: notify enrolled students. Must not fail assignment creation.
   if (created) {
     try {
-      const [a] = await db
-        .select({ title: assessments.title })
-        .from(assessments)
-        .where(eq(assessments.id, created.assessmentId))
-        .limit(1)
-      const enrolled = await db
-        .select({ studentId: classEnrollments.studentId })
-        .from(classEnrollments)
-        .where(eq(classEnrollments.classId, id))
+      const [[a], enrolled] = await Promise.all([
+        db.select({ title: assessments.title }).from(assessments).where(eq(assessments.id, created.assessmentId)).limit(1),
+        db.select({ studentId: classEnrollments.studentId }).from(classEnrollments).where(eq(classEnrollments.classId, id)),
+      ])
       if (enrolled.length > 0) {
         await db.insert(notifications).values(
           enrolled.map((e) => ({
