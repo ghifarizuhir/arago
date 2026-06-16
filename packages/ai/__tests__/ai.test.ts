@@ -5,6 +5,7 @@ import { generateMaterial } from '../src/generate-material.js';
 import { generateBlueprint } from '../src/generate-blueprint.js';
 import { generateAssessment } from '../src/generate-assessment.js';
 import { buildMaterialChatSystemPrompt } from '../src/chat.js';
+import { curriculumTemplate } from '../src/templates/curriculum.js';
 import * as providers from '../src/providers/index.js';
 
 function makeMockModel(responseObject: unknown): MockLanguageModelV1 {
@@ -156,6 +157,24 @@ describe('@arago/ai', () => {
 
     it('handles empty material content without throwing', () => {
       expect(() => buildMaterialChatSystemPrompt('')).not.toThrow();
+    });
+  });
+
+  describe('curriculumTemplate', () => {
+    it('merdeka mentions Capaian Pembelajaran and Fase', () => {
+      const t = curriculumTemplate('merdeka');
+      expect(t).toContain('Capaian Pembelajaran');
+      expect(t).toContain('Fase');
+    });
+
+    it('k13 mentions Kompetensi Inti and Kompetensi Dasar', () => {
+      const t = curriculumTemplate('k13');
+      expect(t).toContain('Kompetensi Inti');
+      expect(t).toContain('Kompetensi Dasar');
+    });
+
+    it('custom returns an empty guidance string', () => {
+      expect(curriculumTemplate('custom')).toBe('');
     });
   });
 });
