@@ -94,4 +94,29 @@ describe('authenticateUser', () => {
     const result = await authenticateUser('nobody@example.com', 'any');
     expect(result).toBeNull();
   });
+
+  it('returns null when user is soft-deleted even with correct password', async () => {
+    const bcrypt = await import('bcryptjs');
+    const hash = await bcrypt.hash('correct', 4);
+
+    const mockUser = {
+      id: 'user-1',
+      email: 'deleted@example.com',
+      name: 'Deleted User',
+      passwordHash: hash,
+      deletedAt: new Date(),
+    };
+
+    const mockDb = db as unknown as { select: ReturnType<typeof vi.fn> };
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([mockUser]),
+        }),
+      }),
+    });
+
+    const result = await authenticateUser('deleted@example.com', 'correct');
+    expect(result).toBeNull();
+  });
 });

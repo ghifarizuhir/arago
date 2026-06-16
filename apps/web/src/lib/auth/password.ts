@@ -21,10 +21,10 @@ export async function authenticateUser(
 
   if (!user || !user.passwordHash) return null;
 
+  if (user.deletedAt !== null) return null;
+
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return null;
-
-  if (user.deletedAt !== null) return null;
 
   return { id: user.id, email: user.email, name: user.name };
 }

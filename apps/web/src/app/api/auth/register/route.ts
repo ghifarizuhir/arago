@@ -36,10 +36,19 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await hashPassword(password);
 
-  const [user] = await db
-    .insert(users)
-    .values({ name, email: normalizedEmail, passwordHash })
-    .returning({ id: users.id, email: users.email, name: users.name });
+  try {
+    const [user] = await db
+      .insert(users)
+      .values({ name, email: normalizedEmail, passwordHash })
+      .returning({ id: users.id, email: users.email, name: users.name });
 
-  return NextResponse.json(user, { status: 201 });
+    return NextResponse.json(user, { status: 201 });
+  } catch (err) {
+    const errMsg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+    const errCode = err instanceof Error && 'code' in err ? (err as any).code : '';
+    if (errMsg.includes('unique') || errMsg.includes('duplicate') || errCode === '23505') {
+      return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
+    }
+    throw err;
+  }
 }

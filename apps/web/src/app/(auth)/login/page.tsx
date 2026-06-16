@@ -8,7 +8,10 @@ import Link from 'next/link';
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/workspaces';
+  const rawCallbackUrl = searchParams.get('callbackUrl') ?? '/workspaces';
+  const callbackUrl = (rawCallbackUrl.startsWith('/') && !rawCallbackUrl.startsWith('//'))
+    ? rawCallbackUrl
+    : '/workspaces';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
