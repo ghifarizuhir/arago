@@ -12,6 +12,8 @@
 
 **Reconciliation note:** `blueprints.creatorId` is NOT NULL in the schema. Every blueprint insert (manual POST and AI generate) MUST set `creatorId` from the session — this slice does so (the original draft omitted it, which would have failed the NOT NULL constraint).
 
+**🔒 SECURITY — workspace-scope every by-id query (applies to ALL routes in this slice):** The code blocks below scope some handlers only by row `id` (+ `deletedAt`/`creatorId`). That is an IDOR gap: any authenticated user could read/mutate another workspace's material or blueprint by guessing its UUID. When implementing, EVERY by-id GET/PATCH/DELETE must also confirm the row belongs to the caller's active workspace. Since `teaching_materials` and `blueprints` have no `workspaceId` column directly, join up the chain: material → module.workspaceId, blueprint → material → module.workspaceId. Read the active workspace via `getCurrentWorkspaceId()`; if the row's owning workspace ≠ the active workspace, return 404. Creator checks (`creatorId === session.user.id`) stay as an additional guard for mutations but do NOT replace workspace scoping on reads.
+
 ---
 
 ### Task 1: Bahan Ajar (generate + Tiptap editor + CRUD)

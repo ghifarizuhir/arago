@@ -12,6 +12,8 @@
 
 **Reconciliation note:** The new-assessment blueprint picker must list ALL workspace blueprints, but `GET /api/blueprints` requires a `materialId`. This slice adds `GET /api/workspace-blueprints` (workspace-scoped via modules→materials→blueprints) and points the picker at it.
 
+**🔒 SECURITY — workspace-scope every by-id query (applies to ALL teacher routes in this slice):** `assessments` HAS a `workspaceId` column — every by-id GET/PATCH/DELETE on `/api/assessments/[id]` and the item routes MUST confirm the assessment belongs to the caller's active workspace (`getCurrentWorkspaceId()`), returning 404 otherwise. Item routes (`/api/assessments/[id]/items[...]`) must verify the parent assessment is in the active workspace before reading/mutating items. `generate-assessment` likewise. Creator checks stay as an extra guard on mutations but do NOT replace workspace scoping. NOTE: the STUDENT routes are intentionally different — a student reads a published assessment and submits in any workspace they are a MEMBER of (verified via `workspaceMembers`), so student-side scoping is by membership, not by the teacher's active-workspace cookie. Keep that distinction.
+
 ---
 
 ### Task 1: Auto-grading pure function

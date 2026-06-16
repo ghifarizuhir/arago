@@ -12,6 +12,8 @@
 
 **Reconciliation note:** The module PATCH schema accepts `fileUrl` (the new-module flow PATCHes it after upload). All workspace-scoped queries use `and(eq(...), isNull(...))` — never the JS `&&` short-circuit.
 
+**🔒 SECURITY:** `/api/modules/[id]` (GET/PATCH/DELETE) and `/api/ai/extract-module` MUST scope by the active workspace, not just by `id` + `deletedAt`. Read `getCurrentWorkspaceId()` and add `eq(teachingModules.workspaceId, workspaceId)` to every where-clause; return 404 on miss. Without this, any authenticated user could read/mutate/extract another workspace's module by guessing its UUID (IDOR). The code blocks below reflect this scoping.
+
 **Prerequisite (manual):** In Supabase, create a Storage bucket named `modules` (public read). Set `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` in `.env.local`.
 
 ---
