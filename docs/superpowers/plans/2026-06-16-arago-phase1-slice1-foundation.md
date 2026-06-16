@@ -4,7 +4,7 @@
 
 **Goal:** Scaffold the Turborepo monorepo, the `@arago/validators` package, and the `@arago/db` Drizzle schema so `pnpm install`, `pnpm typecheck`, and DB migration all succeed.
 
-**Architecture:** pnpm + Turborepo monorepo. Packages export raw TypeScript (no build step), transpiled by Next.js. `@arago/validators` holds Zod schemas + enums; `@arago/db` holds the Drizzle schema for all 11 tables plus a typed postgres.js client.
+**Architecture:** pnpm + Turborepo monorepo. Packages export raw TypeScript (no build step), transpiled by Next.js. `@arago/validators` holds Zod schemas + enums; `@arago/db` holds the Drizzle schema for all 10 tables plus a typed postgres.js client.
 
 **Tech Stack:** Turborepo 2.4, pnpm 9.15, TypeScript 5.7 (strict + noUncheckedIndexedAccess), Zod 3.24, Drizzle ORM 0.38, postgres.js 3.4, Vitest 3.
 
@@ -1301,7 +1301,7 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
   })
 }));
 ```
-Expected: Schema file compiles with zero TypeScript errors; all 11 tables and 3 enums defined.
+Expected: Schema file compiles with zero TypeScript errors; all 10 tables and 3 enums defined.
 
 - [ ] **Step 3.2: Create `packages/db/src/client.ts`**
 ```ts
@@ -1390,7 +1390,7 @@ Ensure `DATABASE_URL` is set in your shell (copy from `.env.example`, point at a
 export DATABASE_URL=postgresql://postgres:password@localhost:5432/arago_dev
 pnpm --filter @arago/db db:generate
 ```
-Expected: Drizzle Kit introspects `src/schema/index.ts` and writes `packages/db/drizzle/0000_*.sql` containing `CREATE TYPE`, `CREATE TABLE`, and `CONSTRAINT` statements for all 11 tables. A `packages/db/drizzle/meta/_journal.json` is also created.
+Expected: Drizzle Kit introspects `src/schema/index.ts` and writes `packages/db/drizzle/0000_*.sql` containing `CREATE TYPE`, `CREATE TABLE`, and `CONSTRAINT` statements for all 10 tables. A `packages/db/drizzle/meta/_journal.json` is also created.
 
 - [ ] **Step 3.7: Inspect generated SQL**
 ```bash
@@ -1421,7 +1421,7 @@ git add packages/db/src/schema/index.ts \
   packages/db/src/index.ts \
   packages/db/src/migrate.ts \
   packages/db/drizzle/
-git commit -m "feat(db): add Drizzle schema for all 11 tables, typed client, and initial migration"
+git commit -m "feat(db): add Drizzle schema for all 10 tables, typed client, and initial migration"
 ```
 
 ---
@@ -1431,6 +1431,6 @@ git commit -m "feat(db): add Drizzle schema for all 11 tables, typed client, and
 - `pnpm install` resolves with zero errors
 - `pnpm --filter @arago/validators test` → 30 passed
 - `pnpm --filter @arago/db typecheck` → zero errors
-- `pnpm --filter @arago/db db:push` applies all 11 tables + 3 enums; re-running `db:generate` shows no drift
+- `pnpm --filter @arago/db db:push` applies all 10 tables + 3 enums; re-running `db:generate` shows no drift
 
 **Next:** Slice 2 — Auth & Shell (`2026-06-16-arago-phase1-slice2-auth-shell.md`).
