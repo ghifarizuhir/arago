@@ -7,6 +7,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar
 } from "drizzle-orm/pg-core";
@@ -176,22 +177,26 @@ export const assessmentItems = pgTable("assessment_items", {
 
 // ─── Submissions ──────────────────────────────────────────────────────────────
 
-export const submissions = pgTable("submissions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  assessmentId: uuid("assessment_id")
-    .notNull()
-    .references(() => assessments.id),
-  studentId: uuid("student_id")
-    .notNull()
-    .references(() => users.id),
-  answers: jsonb("answers").notNull().default({}),
-  score: integer("score"),
-  totalItems: integer("total_items").notNull(),
-  submittedAt: timestamp("submitted_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  gradedAt: timestamp("graded_at", { withTimezone: true })
-});
+export const submissions = pgTable(
+  "submissions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    assignmentId: uuid("assignment_id")
+      .notNull()
+      .references(() => classAssignments.id),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => users.id),
+    answers: jsonb("answers").notNull().default({}),
+    score: integer("score"),
+    totalItems: integer("total_items").notNull(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    gradedAt: timestamp("graded_at", { withTimezone: true })
+  },
+  (t) => [uniqueIndex("submissions_assignment_student_unique").on(t.assignmentId, t.studentId)]
+);
 
 // ─── Classes (Kelas) ────────────────────────────────────────────────────────
 
@@ -342,8 +347,7 @@ export const assessmentsRelations = relations(
       references: [users.id]
     }),
     assessmentBlueprints: many(assessmentBlueprints),
-    items: many(assessmentItems),
-    submissions: many(submissions)
+    items: many(assessmentItems)
   })
 );
 
@@ -372,9 +376,9 @@ export const assessmentItemsRelations = relations(
 );
 
 export const submissionsRelations = relations(submissions, ({ one }) => ({
-  assessment: one(assessments, {
-    fields: [submissions.assessmentId],
-    references: [assessments.id]
+  assignment: one(classAssignments, {
+    fields: [submissions.assignmentId],
+    references: [classAssignments.id]
   }),
   student: one(users, {
     fields: [submissions.studentId],

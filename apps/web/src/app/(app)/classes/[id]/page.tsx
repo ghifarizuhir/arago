@@ -8,6 +8,8 @@ type AssignedMaterial = { materialId: string; title: string }
 type Member = { userId: string; name: string; email: string }
 type Material = { id: string; title: string }
 type ClassRow = { id: string; name: string }
+type Assignment = { id: string; assessmentId: string; openAt: string; dueAt: string; assessmentTitle: string }
+type Assessment = { id: string; title: string }
 
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,6 +21,11 @@ export default function ClassDetailPage() {
   const [wsMaterials, setWsMaterials] = useState<Material[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [wsAssessments, setWsAssessments] = useState<Assessment[]>([])
+  const [pickAssessment, setPickAssessment] = useState('')
+  const [openAt, setOpenAt] = useState('')
+  const [dueAt, setDueAt] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/classes/${id}`)
@@ -33,6 +40,11 @@ export default function ClassDetailPage() {
     setEnrolled(data.enrolled ?? [])
     setMaterials(data.materials ?? [])
     setLoading(false)
+    const aRes = await fetch(`/api/classes/${id}/assignments`)
+    if (aRes.ok) {
+      const { assignments: as } = await aRes.json()
+      setAssignments(as ?? [])
+    }
   }, [id])
 
   useEffect(() => {
@@ -45,6 +57,12 @@ export default function ClassDetailPage() {
       .then((r) => r.json())
       .then(({ materials: m }: { materials: Material[] }) => setWsMaterials(m ?? []))
       .catch(() => setWsMaterials([]))
+    fetch('/api/assessments')
+      .then((r) => r.json())
+      .then(({ assessments: a }: { assessments: { id: string; title: string; status: string }[] }) =>
+        setWsAssessments((a ?? []).filter((x) => x.status === 'published').map((x) => ({ id: x.id, title: x.title }))),
+      )
+      .catch(() => setWsAssessments([]))
   }, [load])
 
   async function rename() {
@@ -115,6 +133,33 @@ export default function ClassDetailPage() {
     } finally {
       setBusy(false)
     }
+  }
+
+  async function createAssignment() {
+    if (!pickAssessment || !openAt || !dueAt) return
+    try {
+      setBusy(true)
+      const res = await fetch(`/api/classes/${id}/assignments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId: pickAssessment, openAt, dueAt }),
+      })
+      if (res.ok) {
+        setPickAssessment('')
+        setOpenAt('')
+        setDueAt('')
+        await load()
+      } else {
+        alert('Gagal menugaskan asesmen. Pastikan tenggat setelah waktu buka.')
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function removeAssignment(assignmentId: string) {
+    await fetch(`/api/classes/${id}/assignments/${assignmentId}`, { method: 'DELETE' })
+    await load()
   }
 
   if (loading) {
@@ -189,6 +234,52 @@ export default function ClassDetailPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-neutral-900 mb-3">Asesmen</h2>
+        {assignments.length === 0 ? (
+          <p className="text-sm text-neutral-400 mb-3">Belum ada asesmen yang ditugaskan.</p>
+        ) : (
+          <ul className="space-y-2 mb-4">
+            {assignments.map((a) => (
+              <li key={a.id} className="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
+                <span className="text-sm text-neutral-800">
+                  {a.assessmentTitle}
+                  <span className="text-neutral-400"> · {new Date(a.openAt).toLocaleString('id-ID')} → {new Date(a.dueAt).toLocaleString('id-ID')}</span>
+                </span>
+                <button onClick={() => removeAssignment(a.id)} className="text-xs text-red-600 hover:underline">Hapus</button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="space-y-2 border border-neutral-200 rounded-lg p-3">
+          <select
+            value={pickAssessment}
+            onChange={(e) => setPickAssessment(e.target.value)}
+            className="w-full px-2 py-1.5 rounded-lg border border-neutral-200 text-sm"
+          >
+            <option value="">Pilih asesmen...</option>
+            {wsAssessments.map((a) => (
+              <option key={a.id} value={a.id}>{a.title}</option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <label className="flex-1 text-xs text-neutral-500">Buka
+              <input type="datetime-local" value={openAt} onChange={(e) => setOpenAt(e.target.value)} className="w-full px-2 py-1.5 rounded-lg border border-neutral-200 text-sm" />
+            </label>
+            <label className="flex-1 text-xs text-neutral-500">Tenggat
+              <input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="w-full px-2 py-1.5 rounded-lg border border-neutral-200 text-sm" />
+            </label>
+          </div>
+          <button
+            onClick={createAssignment}
+            disabled={!pickAssessment || !openAt || !dueAt || busy}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+          >
+            Tugaskan
+          </button>
+        </div>
       </section>
     </div>
   )

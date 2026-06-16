@@ -13,7 +13,8 @@ import {
   CreateAssessmentSchema,
   CreateClassSchema,
   EnrollStudentsSchema,
-  AssignMaterialsSchema
+  AssignMaterialsSchema,
+  CreateAssignmentSchema
 } from "./index.js";
 
 describe("WorkspaceMemberRole", () => {
@@ -293,5 +294,26 @@ describe("AssignMaterialsSchema", () => {
   });
   it("rejects an empty array", () => {
     expect(AssignMaterialsSchema.safeParse({ materialIds: [] }).success).toBe(false);
+  });
+});
+
+describe("CreateAssignmentSchema", () => {
+  const base = {
+    assessmentId: "33333333-3333-3333-3333-333333333333",
+    openAt: "2026-07-01T08:00:00.000Z",
+    dueAt: "2026-07-08T08:00:00.000Z",
+  };
+  it("accepts a valid assignment with dueAt after openAt", () => {
+    expect(CreateAssignmentSchema.safeParse(base).success).toBe(true);
+  });
+  it("rejects dueAt before or equal to openAt", () => {
+    expect(
+      CreateAssignmentSchema.safeParse({ ...base, dueAt: base.openAt }).success,
+    ).toBe(false);
+  });
+  it("rejects a non-uuid assessmentId", () => {
+    expect(
+      CreateAssignmentSchema.safeParse({ ...base, assessmentId: "nope" }).success,
+    ).toBe(false);
   });
 });

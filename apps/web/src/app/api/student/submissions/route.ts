@@ -1,13 +1,20 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
-import { assessments, assessmentItems, submissions, workspaceMembers } from '@arago/db/schema'
+import {
+  assessments,
+  assessmentItems,
+  classAssignments,
+  classEnrollments,
+  classes,
+  submissions,
+} from '@arago/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
 import { gradeSubmission } from '@arago/ai/grading'
 import { z } from 'zod'
 
 const bodySchema = z.object({
-  assessmentId: z.string().uuid(),
+  assignmentId: z.string().uuid(),
   answers: z.record(z.string(), z.string()),
 })
 
@@ -21,41 +28,66 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
   }
 
-  const { assessmentId, answers } = parsed.data
+  const { assignmentId, answers } = parsed.data
 
-  const [assessment] = await db
-    .select()
-    .from(assessments)
-    .where(and(eq(assessments.id, assessmentId), isNull(assessments.deletedAt)))
+  // Resolve the assignment + its class + assessment; assignment & class not soft-deleted, assessment published.
+  const [row] = await db
+    .select({
+      assignmentId: classAssignments.id,
+      classId: classAssignments.classId,
+      assessmentId: classAssignments.assessmentId,
+      openAt: classAssignments.openAt,
+      dueAt: classAssignments.dueAt,
+      status: assessments.status,
+    })
+    .from(classAssignments)
+    .innerJoin(classes, eq(classAssignments.classId, classes.id))
+    .innerJoin(assessments, eq(classAssignments.assessmentId, assessments.id))
+    .where(
+      and(
+        eq(classAssignments.id, assignmentId),
+        isNull(classAssignments.deletedAt),
+        isNull(classes.deletedAt),
+        isNull(assessments.deletedAt),
+      ),
+    )
     .limit(1)
 
-  if (!assessment) {
-    return NextResponse.json({ error: 'Assessment not found' }, { status: 404 })
+  if (!row) {
+    return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
   }
 
-  if (assessment.status !== 'published') {
+  // Student must be enrolled in the assignment's class.
+  const [enrollment] = await db
+    .select({ studentId: classEnrollments.studentId })
+    .from(classEnrollments)
+    .where(
+      and(eq(classEnrollments.classId, row.classId), eq(classEnrollments.studentId, session.user.id)),
+    )
+    .limit(1)
+  if (!enrollment) {
+    return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
+  }
+
+  if (row.status !== 'published') {
     return NextResponse.json({ error: 'Assessment is not published' }, { status: 422 })
   }
 
-  // student must be a member of the assessment's workspace
-  const [membership] = await db
-    .select()
-    .from(workspaceMembers)
-    .where(and(
-      eq(workspaceMembers.workspaceId, assessment.workspaceId),
-      eq(workspaceMembers.userId, session.user.id),
-    ))
-    .limit(1)
-  if (!membership) {
-    return NextResponse.json({ error: 'Assessment not found' }, { status: 404 })
+  // Window enforcement (server-side).
+  const now = new Date()
+  if (now < row.openAt) {
+    return NextResponse.json({ error: 'Asesmen belum dibuka' }, { status: 403 })
+  }
+  if (now > row.dueAt) {
+    return NextResponse.json({ error: 'Batas waktu sudah lewat' }, { status: 403 })
   }
 
+  // Double-submit guard.
   const [existing] = await db
-    .select()
+    .select({ id: submissions.id })
     .from(submissions)
-    .where(and(eq(submissions.assessmentId, assessmentId), eq(submissions.studentId, session.user.id)))
+    .where(and(eq(submissions.assignmentId, assignmentId), eq(submissions.studentId, session.user.id)))
     .limit(1)
-
   if (existing) {
     return NextResponse.json({ error: 'Already submitted', submissionId: existing.id }, { status: 409 })
   }
@@ -63,27 +95,33 @@ export async function POST(req: NextRequest) {
   const items = await db
     .select({ id: assessmentItems.id, correctAnswer: assessmentItems.correctAnswer })
     .from(assessmentItems)
-    .where(eq(assessmentItems.assessmentId, assessmentId))
+    .where(eq(assessmentItems.assessmentId, row.assessmentId))
 
   const { score, totalItems } = gradeSubmission(items, answers)
 
-  const now = new Date()
-  const [submission] = await db
-    .insert(submissions)
-    .values({
-      assessmentId,
-      studentId: session.user.id,
-      answers,
-      score,
-      totalItems,
-      submittedAt: now,
-      gradedAt: now,
-    })
-    .returning()
+  try {
+    const [submission] = await db
+      .insert(submissions)
+      .values({
+        assignmentId,
+        studentId: session.user.id,
+        answers,
+        score,
+        totalItems,
+        submittedAt: now,
+        gradedAt: now,
+      })
+      .returning()
 
-  if (!submission) {
-    return NextResponse.json({ error: 'Failed to create submission' }, { status: 500 })
+    if (!submission) {
+      return NextResponse.json({ error: 'Failed to create submission' }, { status: 500 })
+    }
+
+    return NextResponse.json({ submissionId: submission.id, score, totalItems }, { status: 201 })
+  } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err && (err as { code?: string }).code === '23505') {
+      return NextResponse.json({ error: 'Already submitted' }, { status: 409 })
+    }
+    throw err
   }
-
-  return NextResponse.json({ submissionId: submission.id, score, totalItems }, { status: 201 })
 }

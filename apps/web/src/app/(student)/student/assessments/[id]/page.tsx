@@ -8,7 +8,7 @@ type AssessmentItem = { id: string; question: string; options: Option[]; sortOrd
 type Assessment = { id: string; title: string; status: string }
 
 export default function TakeAssessmentPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams<{ id: string }>() // assignmentId
   const router = useRouter()
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [items, setItems] = useState<AssessmentItem[]>([])
@@ -18,12 +18,13 @@ export default function TakeAssessmentPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch(`/api/assessments/${id}`)
-      .then((r) => r.json())
+    fetch(`/api/student/assignments/${id}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then(({ assessment: a, items: its }: { assessment: Assessment; items: AssessmentItem[] }) => {
         setAssessment(a)
         setItems(its ?? [])
       })
+      .catch(() => setAssessment(null))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -42,7 +43,7 @@ export default function TakeAssessmentPage() {
       const res = await fetch('/api/student/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assessmentId: id, answers }),
+        body: JSON.stringify({ assignmentId: id, answers }),
       })
       if (res.status === 409) {
         const data = await res.json()
