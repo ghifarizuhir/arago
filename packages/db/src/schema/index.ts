@@ -189,6 +189,7 @@ export const submissions = pgTable(
       .references(() => users.id),
     answers: jsonb("answers").notNull().default({}),
     score: integer("score"),
+    correctCount: integer("correct_count"),
     totalItems: integer("total_items").notNull(),
     submittedAt: timestamp("submitted_at", { withTimezone: true })
       .notNull()
