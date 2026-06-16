@@ -25,6 +25,7 @@ export default function MaterialEditorPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [loading, setLoading] = useState(true)
   const [genBlueprint, setGenBlueprint] = useState(false)
+  const [genCurriculum, setGenCurriculum] = useState<'merdeka' | 'k13' | 'custom'>('merdeka')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -98,7 +99,7 @@ export default function MaterialEditorPage() {
       const res = await fetch('/api/ai/generate-blueprint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ materialId: material.id, curriculumType: 'merdeka' }),
+        body: JSON.stringify({ materialId: material.id, curriculumType: genCurriculum }),
       })
       if (res.ok) {
         const { blueprint } = await res.json()
@@ -174,6 +175,21 @@ export default function MaterialEditorPage() {
             >
               {material.status === 'draft' ? 'Terbitkan' : 'Jadikan Draft'}
             </button>
+
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 uppercase tracking-wide mb-1">
+                Kurikulum
+              </label>
+              <select
+                value={genCurriculum}
+                onChange={(e) => setGenCurriculum(e.target.value as 'merdeka' | 'k13' | 'custom')}
+                className="w-full px-2 py-1.5 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:border-neutral-400"
+              >
+                <option value="merdeka">Kurikulum Merdeka</option>
+                <option value="k13">Kurikulum 2013</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
 
             <button
               type="button"
