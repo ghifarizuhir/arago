@@ -1,53 +1,99 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { db } from '@arago/db/client'
-import { teachingMaterials, teachingModules, workspaceMembers } from '@arago/db/schema'
-import { eq, isNull, and, inArray } from 'drizzle-orm'
+import {
+  classes,
+  classEnrollments,
+  classAssignments,
+  assessments,
+  submissions,
+} from '@arago/db/schema'
+import { eq, isNull, and, inArray, gte, lte, notInArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
 
 export default async function StudentDashboardPage() {
   const { error, session } = await requireAuth()
   if (error || !session) return redirect('/login')
 
-  const memberships = await db
-    .select({ workspaceId: workspaceMembers.workspaceId })
-    .from(workspaceMembers)
-    .where(eq(workspaceMembers.userId, session.user.id))
+  // Enrolled, non-deleted classes.
+  const enrolledClasses = await db
+    .select({ id: classes.id, name: classes.name })
+    .from(classEnrollments)
+    .innerJoin(classes, eq(classEnrollments.classId, classes.id))
+    .where(and(eq(classEnrollments.studentId, session.user.id), isNull(classes.deletedAt)))
 
-  const workspaceIds = memberships.map((m) => m.workspaceId)
+  const classIds = enrolledClasses.map((c) => c.id)
 
-  const publishedMaterials =
-    workspaceIds.length === 0
+  // Submissions already made by this student (to exclude from active list).
+  const mySubs = await db
+    .select({ assignmentId: submissions.assignmentId })
+    .from(submissions)
+    .where(eq(submissions.studentId, session.user.id))
+  const submittedIds = mySubs.map((s) => s.assignmentId)
+
+  const now = new Date()
+  const activeAssignments =
+    classIds.length === 0
       ? []
       : await db
-          .select({ id: teachingMaterials.id, title: teachingMaterials.title })
-          .from(teachingMaterials)
-          .innerJoin(teachingModules, eq(teachingMaterials.moduleId, teachingModules.id))
+          .select({
+            id: classAssignments.id,
+            classId: classAssignments.classId,
+            dueAt: classAssignments.dueAt,
+            assessmentTitle: assessments.title,
+          })
+          .from(classAssignments)
+          .innerJoin(assessments, eq(classAssignments.assessmentId, assessments.id))
           .where(
             and(
-              inArray(teachingModules.workspaceId, workspaceIds),
-              eq(teachingMaterials.status, 'published'),
-              isNull(teachingMaterials.deletedAt),
-              isNull(teachingModules.deletedAt),
+              inArray(classAssignments.classId, classIds),
+              isNull(classAssignments.deletedAt),
+              isNull(assessments.deletedAt),
+              eq(assessments.status, 'published'),
+              lte(classAssignments.openAt, now),
+              gte(classAssignments.dueAt, now),
+              submittedIds.length > 0
+                ? notInArray(classAssignments.id, submittedIds)
+                : undefined,
             ),
           )
-          .orderBy(teachingMaterials.createdAt)
 
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Bahan Ajar</h2>
-        {publishedMaterials.length === 0 ? (
-          <p className="text-sm text-neutral-400">Belum ada bahan ajar.</p>
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Kelas Saya</h2>
+        {enrolledClasses.length === 0 ? (
+          <p className="text-sm text-neutral-400">Belum terdaftar di kelas mana pun.</p>
         ) : (
           <ul className="space-y-2">
-            {publishedMaterials.map((m) => (
-              <li key={m.id}>
+            {enrolledClasses.map((c) => (
+              <li key={c.id}>
                 <Link
-                  href={`/student/materials/${m.id}`}
+                  href={`/student/classes/${c.id}`}
                   className="block px-4 py-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-sm font-medium text-neutral-800 transition-colors"
                 >
-                  {m.title}
+                  {c.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Tugas Aktif</h2>
+        {activeAssignments.length === 0 ? (
+          <p className="text-sm text-neutral-400">Tidak ada tugas aktif.</p>
+        ) : (
+          <ul className="space-y-3">
+            {activeAssignments.map((a) => (
+              <li key={a.id}>
+                <Link
+                  href={`/student/assessments/${a.id}`}
+                  className="flex items-center justify-between p-4 bg-white border border-neutral-200 rounded-lg hover:border-neutral-300 hover:shadow-sm transition-all"
+                >
+                  <span className="font-medium text-neutral-900">{a.assessmentTitle}</span>
+                  <span className="text-xs text-neutral-500">Tenggat {new Date(a.dueAt).toLocaleString('id-ID')}</span>
                 </Link>
               </li>
             ))}
