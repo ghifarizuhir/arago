@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@arago/db/client'
-import { teachingMaterials, teachingModules, workspaceMembers } from '@arago/db/schema'
+import { teachingMaterials, teachingModules, classMaterials, classes, classEnrollments } from '@arago/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { requireAuth } from '@/lib/auth/guards'
 import { streamTutor } from '@arago/ai'
@@ -28,19 +28,24 @@ export async function POST(req: NextRequest) {
 
   const { materialId, messages } = parsed.data
 
-  // Membership-scoped re-fetch of the published material. Never trust client content.
+  // Enrollment-scoped re-fetch of the published material. Never trust client content.
   const [material] = await db
     .select({ content: teachingMaterials.content })
     .from(teachingMaterials)
     .innerJoin(teachingModules, eq(teachingMaterials.moduleId, teachingModules.id))
-    .innerJoin(workspaceMembers, eq(workspaceMembers.workspaceId, teachingModules.workspaceId))
+    .innerJoin(classMaterials, eq(classMaterials.materialId, teachingMaterials.id))
+    .innerJoin(classes, eq(classes.id, classMaterials.classId))
+    .innerJoin(
+      classEnrollments,
+      and(eq(classEnrollments.classId, classes.id), eq(classEnrollments.studentId, session.user.id)),
+    )
     .where(
       and(
         eq(teachingMaterials.id, materialId),
-        eq(workspaceMembers.userId, session.user.id),
         eq(teachingMaterials.status, 'published'),
         isNull(teachingMaterials.deletedAt),
         isNull(teachingModules.deletedAt),
+        isNull(classes.deletedAt),
       ),
     )
     .limit(1)
